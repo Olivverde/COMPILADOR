@@ -4,7 +4,6 @@ from antlr4.tree.Tree import TerminalNodeImpl
 from testLexer import testLexer
 from testParser import testParser
 from antlr4.tree.Trees import Trees
-from ast_v import *
 import pydot
 
 class Lex_Ser():
@@ -54,9 +53,8 @@ class TransformDot(ParseTreeVisitor):
 LS = Lex_Ser()
 LS.main()
     
-
-    # graphs = pydot.graph_from_dot_file('ast.dot')
-    # graph = graphs[0]
-    # graph.write_png('out.png')
-    # graph.write_png('somefile.png')
+graphs = pydot.graph_from_dot_file('ast.dot')
+graph = graphs[0]
+graph.write_png('out.png')
+graph.write_png('somefile.png')
     

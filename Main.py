@@ -56,5 +56,5 @@ LS.main()
 graphs = pydot.graph_from_dot_file('ast.dot')
 graph = graphs[0]
 graph.write_png('out.png')
-graph.write_png('somefile.png')
+graph.write_png('out.png')
     

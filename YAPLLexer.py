@@ -97,7 +97,7 @@ def serializedATN():
         234,1,6,0,0
     ]
 
-class testLexer(Lexer):
+class YAPLLexer(Lexer):
 
     atn = ATNDeserializer().deserialize(serializedATN())
 

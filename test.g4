@@ -1,20 +1,56 @@
 grammar test;
 
-prog : statement* EOF ;
+prog: class+;
 
-statement
-    :   ID '=' expression ';'    
-    |   expression ';'            
-    ;
+class: 'class' TYPE ('inherits' TYPE)? '{' statement* '}';
 
-expression
-    :   '(' expression ')'                
-    |   expression op=('+'|'-') expression  
-    |   expression op=('*'|'/') expression  
-    |   INT                                
-    |   ID                                 
-    ;
+statement: ID '(' formalList? ')' ':' TYPE expr ';'
+       | ID ':' TYPE ('<-' expr)? ';';
 
-ID : [a-zA-Z_][a-zA-Z_0-9]* ;   
-INT : [0-9]+ ;              
-WS : [ \t\r\n]+ -> skip ;       
+formalList: formal (';' formal)*;
+
+formal: ID ':' TYPE;
+
+expr: assignExpr;
+
+assignExpr: condExpr ('<-' assignExpr)?;
+
+condExpr: orExpr ('if' orExpr 'then' expr 'else' condExpr)?;
+
+orExpr: andExpr ('or' andExpr)*;
+
+andExpr: relExpr ('and' relExpr)*;
+
+relExpr: addExpr (('<' | '<=' | '=' | 'not') addExpr)?;
+
+addExpr: multExpr (('+' | '-') multExpr)*;
+
+multExpr: unaryExpr (('*' | '/') unaryExpr)?;
+
+unaryExpr: ('not' | '-')? atomExpr;
+
+atomExpr: ID '(' exprList? ')'
+        | 'if' expr 'then' expr 'else' expr 'fi'
+        | 'while' expr 'loop' expr 'pool'
+        | '{' expr (',' expr)* '}'
+        | 'let' letBindingList 'in' expr
+        | 'new' TYPE
+        | 'isvoid' expr
+        | '(' expr ')'
+        | ID
+        | INTEGER
+        | STRING
+        | 'true'
+        | 'false';
+
+letBindingList: letBinding (',' letBinding)*;
+
+letBinding: ID ':' TYPE ('<-' expr)?;
+
+exprList: expr (',' expr)*;
+
+ID : ([a-z][a-zA-Z] | [0-9] | '_') ([a-zA-Z] | [0-9] | '_')*;
+TYPE : [A-Z][a-zA-Z] ([a-zA-Z] | [0-9] | '_')*;
+INTEGER: [0-9]+;
+STRING: '"' (~["\r\n] | '\\' [btnf])* '"';  // Escaping backslash added
+WS: [ \t\r\n\f]+ -> skip;

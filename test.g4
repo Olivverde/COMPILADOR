@@ -1,56 +1,116 @@
+// referencia para archivo: https://github.com/antlr/website-antlr4/tree/gh-pages/papers/ALL-star
 grammar test;
 
-prog: class+;
+ID: [a-zA-Z][a-zA-Z0-9_]*;
+INT_CONST: [0-9]+;
+STR_CONST: '"' ( '\\' [\\"] | ~[\\"\r\n] )* '"';
 
-class: 'class' TYPE ('inherits' TYPE)? '{' statement* '}';
+// Espacios en blanco y saltos de linea se ignoran
+WS: [ \t\r\n]+ -> skip;
 
-statement: ID '(' formalList? ')' ':' TYPE expr ';'
-       | ID ':' TYPE ('<-' expr)? ';';
+BOOL: 'Bool';
+INT: 'Int';
+STRING: 'String';
+IO: 'IO';
+OBJECT: 'Object';
+SELF_TYPE: 'SELF_TYPE';
 
-formalList: formal (';' formal)*;
+class: 'class';
+inherits: 'inherits';
 
-formal: ID ':' TYPE;
+CASE: 'case';
+OF: 'of';
+ESAC: 'esac';
+NEW: 'new';
+ISVOID: 'isvoid';
+NOT: 'not';
 
-expr: assignExpr;
+type: ID | INT | STRING | BOOL | OBJECT | SELF_TYPE | IO ;
+binary_op: '+' | '-' | '*' | '=' | '@' | '/' | '<' | '<=';
+unary_op: '~' | NOT;
 
-assignExpr: condExpr ('<-' assignExpr)?;
+COMMA: ',';
+DOT: '.';
+COLON: ':';
+SEMI: ';';
+ASSIGN: '<-';
+ARROW: '=>';
+LPAREN: '(';
+RPAREN: ')';
+LBRACE: '{';
+RBRACE: '}';
+LINE_COMMENT:
+	'//' .*? '\n' -> skip;
+COMMENT: '/*' .*? '*/' -> skip;
 
-condExpr: orExpr ('if' orExpr 'then' expr 'else' condExpr)?;
 
-orExpr: andExpr ('or' andExpr)*;
+program: clas_list+;
 
-andExpr: relExpr ('and' relExpr)*;
+clas_list:
+	'class' type ('inherits' type)? LBRACE (listOfFeature) RBRACE SEMI;
 
-relExpr: addExpr (('<' | '<=' | '=' | 'not') addExpr)?;
+listOfFeature: feature* | formal*;
 
-addExpr: multExpr (('+' | '-') multExpr)*;
+formal: ID COLON type;
 
-multExpr: unaryExpr (('*' | '/') unaryExpr)?;
+feature: attributesDef | method_definition | methodSimple;
 
-unaryExpr: ('not' | '-')? atomExpr;
+attributesDef: ID COLON type ('<-' expr)? (LPAREN expr SEMI RPAREN)? SEMI;
 
-atomExpr: ID '(' exprList? ')'
-        | 'if' expr 'then' expr 'else' expr 'fi'
-        | 'while' expr 'loop' expr 'pool'
-        | '{' expr (',' expr)* '}'
-        | 'let' letBindingList 'in' expr
-        | 'new' TYPE
-        | 'isvoid' expr
-        | '(' expr ')'
-        | ID
-        | INTEGER
-        | STRING
-        | 'true'
-        | 'false';
+methodSimple:
+	ID LPAREN parameters? RPAREN SEMI;
 
-letBindingList: letBinding (',' letBinding)*;
+method_definition:
+	ID LPAREN parameters? RPAREN COLON type LBRACE (block SEMI)*  RBRACE SEMI;
 
-letBinding: ID ':' TYPE ('<-' expr)?;
+let_declaration: 'let' let_binding (',' let_binding)* ('in' LBRACE (expr SEMI)* RBRACE)?;
+let_binding: ID ':' type ('<-' expr)? (type)?;
 
-exprList: expr (',' expr)*;
+ifRule: 'if' expr ('then' (expr|whileRule|ifRule)*)* ('else' (expr|whileRule|ifRule))? 'fi';
+whileRule: 'while' (expr|whileRule|ifRule)* 'loop' (expr|whileRule|ifRule)* 'pool';
 
-ID : ([a-z][a-zA-Z] | [0-9] | '_') ([a-zA-Z] | [0-9] | '_')*;
-TYPE : [A-Z][a-zA-Z] ([a-zA-Z] | [0-9] | '_')*;
-INTEGER: [0-9]+;
-STRING: '"' (~["\r\n] | '\\' [btnf])* '"';  // Escaping backslash added
-WS: [ \t\r\n\f]+ -> skip;
+block: ifRule* | whileRule* | let_declaration* | expr*;
+
+parameters: formal (COMMA formal)*;
+
+expr:
+	ID ASSIGN expr
+	| ID '(' expr ')'
+	| ID '(' parameters? ')'
+	| '{' expr '}'
+	| STR_CONST
+	| ID '(' STR_CONST ')'
+	| '(' STR_CONST ')'
+	| INT_CONST
+	| NEW ID
+	| NEW type
+	| ISVOID expr
+	| INT_CONST
+	| STR_CONST
+	| NOT expr
+	| LPAREN expr+? RPAREN
+	| ISVOID expr
+	| 'self'
+	| 'true'
+	| 'false'
+	| 'void'
+	| expr DOT ID
+	| expr DOT ID LPAREN expr? RPAREN
+	| expr DOT ID ASSIGN expr
+	| expr '@' type DOT ID LPAREN expr (SEMI expr)* RPAREN
+	| expr '~'
+	| expr ('-' expr)+
+	| expr ('+' expr)+
+	| expr ('<' expr)+
+	| expr ('>' expr)+
+	| expr '=' expr
+	| expr ('+' expr)+
+	| expr ('-' expr)+
+	| expr ('*' expr)+
+	| expr ('/' expr)+
+	| expr ('%' expr)+
+	| expr '^' expr
+	| expr '<=' expr
+	| ID;
+
+ErrorChar : . ;

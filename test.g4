@@ -15,8 +15,16 @@ IO: 'IO';
 OBJECT: 'Object';
 SELF_TYPE: 'SELF_TYPE';
 
-class: 'class';
-inherits: 'inherits';
+CLASS_RESERVED: 'class' | 'CLASS' ;
+INHERITS_RESERVED: 'inherits' | 'INHERITS' ;
+IF_RESERVED: 'if' | 'IF' ;
+THEN_RESERVED: 'then' | 'THEN';
+ELSE_RESERVED: 'else' | 'ELSE';
+FI_RESERVED: 'fi' | 'FI' ;
+LET_RESERVED: 'let' | 'LET' ;
+IN_RESERVED: 'in' | 'IN' ;
+WHILE_RESERVED: 'while' | 'WHILE' ;
+NEW_RESERVED : 'new' | 'NEW' ;
 
 CASE: 'case';
 OF: 'of';
@@ -47,7 +55,7 @@ COMMENT: '/*' .*? '*/' -> skip;
 program: clas_list+;
 
 clas_list:
-	'class' type ('inherits' type)? LBRACE (listOfFeature) RBRACE SEMI;
+	CLASS_RESERVED type (INHERITS_RESERVED type)? LBRACE (listOfFeature) RBRACE SEMI;
 
 listOfFeature: feature* | formal*;
 
@@ -63,11 +71,11 @@ methodSimple:
 method_definition:
 	ID LPAREN parameters? RPAREN COLON type LBRACE (block SEMI)*  RBRACE SEMI;
 
-let_declaration: 'let' let_binding (',' let_binding)* ('in' LBRACE (expr SEMI)* RBRACE)?;
+let_declaration: LET_RESERVED let_binding (',' let_binding)* (IN_RESERVED LBRACE (expr SEMI)* RBRACE)?;
 let_binding: ID ':' type ('<-' expr)? (type)?;
 
-ifRule: 'if' expr ('then' (expr|whileRule|ifRule)*)* ('else' (expr|whileRule|ifRule))? 'fi';
-whileRule: 'while' (expr|whileRule|ifRule)* 'loop' (expr|whileRule|ifRule)* 'pool';
+ifRule: IF_RESERVED expr (THEN_RESERVED (expr|whileRule|ifRule)*)* (ELSE_RESERVED (expr|whileRule|ifRule))? FI_RESERVED;
+whileRule: WHILE_RESERVED (expr|whileRule|ifRule)* 'loop' (expr|whileRule|ifRule)* 'pool';
 
 block: ifRule* | whileRule* | let_declaration* | expr*;
 

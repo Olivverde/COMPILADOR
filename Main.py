@@ -7,6 +7,7 @@ from testParser import testParser
 from testListener import testListener
 from antlr4.tree.Trees import Trees
 from prettytable.prettytable import NONE
+from SymbolsTable import *
 import pydot
 from colorama import *
 
@@ -46,9 +47,12 @@ class Lex_Ser():
                 for i in myError.listErrors:
                     print(i)
             else:
+                printer = ShowTable()
                 visitor = TransformDot()
                 visitor.visit(tree)
                 dot = visitor.getDot()
+                walkerTree = ParseTreeWalker() # recorrer este árbol de análisis y aplicar logica
+                walkerTree.walk(printer, tree)
                 with open('ast.dot', 'w') as file:
                     file.write(dot)
                 print(Fore.GREEN +'Árbol generado con éxito, visualize: ' + Style.BRIGHT + "out.png" + Style.RESET_ALL)

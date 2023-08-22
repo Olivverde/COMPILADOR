@@ -21,6 +21,100 @@
     <script src="https://d3js.org/d3.v3.min.js" charset="utf-8"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
     <title>Compilador</title>
+    
+    <style>
+        textarea {
+            font-family: Consolas, monospace;
+            font-size: 12pt;
+        }
+        
+        #input {
+            border-top-left-radius: 5px;
+            border-bottom-left-radius: 5px;
+        }
+        
+        #output {
+            border-top-right-radius: 5px;
+            border-bottom-right-radius: 5px;
+        }
+        #input-grammar {
+            border-top-right-radius: 5px;
+            border-bottom-right-radius: 5px;
+        }
+
+        .row{
+            justify-content: space-between;
+        }
+
+        .col-5{
+            min-width: 50%;
+        }
+        
+        .row.mb-3 {
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            margin-right: 10px;
+        }
+
+        #lbl-upload {
+            cursor: pointer;
+        }
+
+        #line-numbers {
+            counter-reset: line;
+        }
+
+        #line-numbers::before {
+            content: counter(line);
+            counter-increment: line;
+            display: block;
+            color: #ddd;
+            text-align: right;
+        }
+
+        #input, #output, #input-grammar,#dfa-output,#lrPraseTable {
+            background-color: #292b2c;
+            color: #fff;
+            border-color: #464a4c;
+        }
+
+
+        .editor-container {
+            display: flex;
+            border: 1px solid #ccc;
+            overflow: hidden;
+            max-height: 80%;
+        }
+
+        .line-number {
+            flex-shrink: 0;
+            text-align: right;
+            padding: 10px;
+            color: gray;
+            background-color: #f7f7f7;
+            overflow: hidden;
+            border-top-left-radius: 5px;
+            border-bottom-left-radius: 5px;
+        }
+
+        .text-area-container {
+            flex-grow: 1;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #input {
+            font-family: Consolas, monospace;
+            border: none;
+            resize: none;
+            height: 100%;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+
+    </style>
 </head>
 
 <body>
@@ -66,7 +160,51 @@
         </div>
     </div>
 
-    <script src="./assets/botones.js"></script>
+    <script>
+        function abrir(){
+            const fileInput = document.getElementById('file-input');
+            fileInput.onchange = function(e) {
+                const file = fileInput.files[0];
+                const reader = new FileReader();
+
+                reader.onload = function(e) {
+                    const content = e.target.result;
+                    document.getElementById('input').value = content;
+                };
+
+                reader.readAsText(file);
+            };
+
+            fileInput.click();
+        }
+    </script>
+
+    <script>
+        function limpiar(){
+            location.reload()
+        }
+    </script>
+
+    <script>
+        const lineNumberContainer = document.querySelector('.line-number');
+        const textarea = document.getElementById('input');
+
+        textarea.addEventListener('input', updateLineNumbers);
+        textarea.addEventListener('scroll', syncScroll);
+
+        function updateLineNumbers() {
+        const lines = textarea.value.split('\n');
+        const lineNumbers = lines.map((_, index) => index + 1);
+        lineNumberContainer.innerHTML = lineNumbers.join('<br>');
+        }
+
+        function syncScroll() {
+        lineNumberContainer.style.marginTop = `-${textarea.scrollTop}px`;
+        }
+
+        updateLineNumbers();
+
+    </script>
 </body>
 
 </html>

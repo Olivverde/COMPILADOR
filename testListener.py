@@ -8,24 +8,6 @@ else:
 # This class defines a complete listener for a parse tree produced by testParser.
 class testListener(ParseTreeListener):
 
-    # Enter a parse tree produced by testParser#class.
-    def enterClass(self, ctx:testParser.ClassContext):
-        pass
-
-    # Exit a parse tree produced by testParser#class.
-    def exitClass(self, ctx:testParser.ClassContext):
-        pass
-
-
-    # Enter a parse tree produced by testParser#inherits.
-    def enterInherits(self, ctx:testParser.InheritsContext):
-        pass
-
-    # Exit a parse tree produced by testParser#inherits.
-    def exitInherits(self, ctx:testParser.InheritsContext):
-        pass
-
-
     # Enter a parse tree produced by testParser#type.
     def enterType(self, ctx:testParser.TypeContext):
         pass
@@ -72,11 +54,20 @@ class testListener(ParseTreeListener):
 
 
     # Enter a parse tree produced by testParser#listOfFeature.
-    def enterFeature_list(self, ctx:testParser.Feature_listContext):
+    def enterListOfFeature(self, ctx:testParser.ListOfFeatureContext):
         pass
 
     # Exit a parse tree produced by testParser#listOfFeature.
-    def exitFeature_list(self, ctx:testParser.Feature_listContext):
+    def exitListOfFeature(self, ctx:testParser.ListOfFeatureContext):
+        pass
+
+
+    # Enter a parse tree produced by testParser#formal.
+    def enterFormal(self, ctx:testParser.FormalContext):
+        pass
+
+    # Exit a parse tree produced by testParser#formal.
+    def exitFormal(self, ctx:testParser.FormalContext):
         pass
 
 
@@ -90,11 +81,20 @@ class testListener(ParseTreeListener):
 
 
     # Enter a parse tree produced by testParser#attributesDef.
-    def enterAttribute_definition(self, ctx:testParser.Attribute_definitionContext):
+    def enterAttributesDef(self, ctx:testParser.AttributesDefContext):
         pass
 
     # Exit a parse tree produced by testParser#attributesDef.
-    def exitAttribute_definition(self, ctx:testParser.Attribute_definitionContext):
+    def exitAttributesDef(self, ctx:testParser.AttributesDefContext):
+        pass
+
+
+    # Enter a parse tree produced by testParser#methodSimple.
+    def enterMethodSimple(self, ctx:testParser.MethodSimpleContext):
+        pass
+
+    # Exit a parse tree produced by testParser#methodSimple.
+    def exitMethodSimple(self, ctx:testParser.MethodSimpleContext):
         pass
 
 
@@ -126,20 +126,20 @@ class testListener(ParseTreeListener):
 
 
     # Enter a parse tree produced by testParser#ifRule.
-    def enterIf_statement(self, ctx:testParser.If_statementContext):
+    def enterIfRule(self, ctx:testParser.IfRuleContext):
         pass
 
     # Exit a parse tree produced by testParser#ifRule.
-    def exitIf_statement(self, ctx:testParser.If_statementContext):
+    def exitIfRule(self, ctx:testParser.IfRuleContext):
         pass
 
 
     # Enter a parse tree produced by testParser#whileRule.
-    def enterWhile_statement(self, ctx:testParser.While_statementContext):
+    def enterWhileRule(self, ctx:testParser.WhileRuleContext):
         pass
 
     # Exit a parse tree produced by testParser#whileRule.
-    def exitWhile_statement(self, ctx:testParser.While_statementContext):
+    def exitWhileRule(self, ctx:testParser.WhileRuleContext):
         pass
 
 
@@ -152,30 +152,12 @@ class testListener(ParseTreeListener):
         pass
 
 
-    # Enter a parse tree produced by testParser#methodSimple.
-    def enterSimple_method_definition(self, ctx:testParser.Simple_method_definitionContext):
-        pass
-
-    # Exit a parse tree produced by testParser#methodSimple.
-    def exitSimple_method_definition(self, ctx:testParser.Simple_method_definitionContext):
-        pass
-
-
-    # Enter a parse tree produced by testParser#formal.
-    def enterFormal(self, ctx:testParser.FormalContext):
-        pass
-
-    # Exit a parse tree produced by testParser#formal.
-    def exitFormal(self, ctx:testParser.FormalContext):
-        pass
-
-
     # Enter a parse tree produced by testParser#parameters.
-    def enterParameter_list(self, ctx:testParser.Parameter_listContext):
+    def enterParameters(self, ctx:testParser.ParametersContext):
         pass
 
     # Exit a parse tree produced by testParser#parameters.
-    def exitParameter_list(self, ctx:testParser.Parameter_listContext):
+    def exitParameters(self, ctx:testParser.ParametersContext):
         pass
 
 

@@ -1,25 +1,14 @@
-class Main {
-    name : String; 
-    age : Int;
-};
-// Comentario
+class A {
 
-class Silly {
-    copy() : SELF_TYPE { self; };
-};
+   var : Int <- 0;
+   value() : Int { var };
 
-// Clase de ejemplo
-class Example inherits Silly {
-    numberOfZombies : Int;
-    favoriteKid : String;
-
-    serviceInstance : Service <- (new Service).copy();
-
-    isListEmpty() : Bool { false; };
-    
-    // Comentario de prueba
-    initializeList(hd: Int, tl : List) : Cons {
-        firstElement <- hd;
-    };
-
+    method2(num1 : Int, num2 : Int) : B {  -- plus
+      (let x : Int in
+	 {
+            x <- num1 + num2;
+	    (new B).set_var(x);
+	 }
+      )
+   };
 };

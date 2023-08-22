@@ -1,4 +1,4 @@
-grammar YAPL;
+grammar test;
 
 // Espacios en blanco y saltos de linea se ignoran
 WS: [ \t\r\n]+ -> skip;

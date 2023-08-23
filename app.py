@@ -73,6 +73,8 @@ def compile_code():
                 for i in stdout.listErrors:
                     output=output+"\n"+i
                     print(i)
+    else:
+         output='Funciona correctamente'
 
 
     return json.dumps({'result': "Compilo", 'output': output})

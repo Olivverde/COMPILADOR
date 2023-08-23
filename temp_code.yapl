@@ -1,0 +1,25 @@
+class Main {
+    name : String; 
+    age : Int;
+};
+// Comentario
+
+class Silly {
+    copy() : SELF_TYPE { self; };
+};
+
+// Clase de ejemplo
+class Example inherits Silly {
+    numberOfZombies : Int;
+    favoriteKid : String;
+
+    serviceInstance : Service <- (new Service).copy();
+
+    isListEmpty() : Bool { false; };
+    
+    // Comentario de prueba
+    initializeList(hd: Int, tl : List) : Cons {
+        firstElement <- hd;
+    };
+
+};

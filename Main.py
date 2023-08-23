@@ -28,34 +28,7 @@ class errorListener(ErrorListener):
 class Lex_Ser():
     
     def main(self):
-        
-        # with open("testError.yapl", 'r') as file:
-        with open("test.yapl", 'r') as file:
-            input_stream = InputStream(file.read())
-            
-            lexer = testLexer(input_stream)
-            lexer.removeErrorListeners()
-            token_stream = CommonTokenStream(lexer)
-            parser = testParser(token_stream)
-            myError = errorListener() 
-            parser.removeErrorListeners()
-            parser.addErrorListener(myError)
-            tree = parser.program()  
-
-            if myError.getHasError():
-                print(Style.BRIGHT + "Se ha(n) encontrado error(es)" + Style.RESET_ALL)
-                for i in myError.listErrors:
-                    print(i)
-            else:
-                printer = ShowTable()
-                visitor = TransformDot()
-                visitor.visit(tree)
-                dot = visitor.getDot()
-                walkerTree = ParseTreeWalker() # recorrer este árbol de análisis y aplicar logica
-                walkerTree.walk(printer, tree)
-                with open('ast.dot', 'w') as file:
-                    file.write(dot)
-                print(Fore.GREEN +'Árbol generado con éxito, visualize: ' + Style.BRIGHT + "out.png" + Style.RESET_ALL)
+            pass
 
             
 class TransformDot(ParseTreeVisitor):

@@ -12,7 +12,7 @@ STRING: 'String';
 IO: 'IO';
 OBJECT: 'Object';
 SELF_TYPE: 'SELF_TYPE';
-NEW: 'new';
+NEW: 'new' | 'NEW' ;
 
 CLASS_RESERVED: 'class'|'CLASS';
 INHERITS_RESERVED: 'inherits' | 'INHERITS' ;
@@ -23,7 +23,6 @@ FI_RESERVED: 'fi' | 'FI' ;
 LET_RESERVED: 'let' | 'LET' ;
 IN_RESERVED: 'in' | 'IN' ;
 WHILE_RESERVED: 'while' | 'WHILE' ;
-NEW_RESERVED : 'NEW' | 'new' ;
 
 CASE: 'case';
 OF: 'of';
@@ -52,16 +51,16 @@ ID: [a-zA-Z][a-zA-Z0-9_]*;
 INT_CONST: [0-9]+;
 STR_CONST: '"' ( '\\' [\\"] | ~[\\"\r\n] )* '"';
 
-program: clas_list+;
+program: (clas_list)*;
 
 clas_list: CLASS_RESERVED type (INHERITS_RESERVED type)? LBRACE (listOfFeature) RBRACE SEMI;
 
 
-listOfFeature: feature* | formal*;
+listOfFeature: feature* ;
 
 formal: ID COLON type;
 
-feature: attributesDef | method_definition | methodSimple;
+feature: attributesDef | method_definition;
 
 attributesDef: ID COLON type ('<-' expr)? (LPAREN expr SEMI RPAREN)? SEMI;
 
@@ -82,43 +81,26 @@ block: (LBRACE)? (ifRule* | whileRule* | let_declaration* | expr*) (RBRACE)?;
 parameters: formal (COMMA formal)*;
 
 expr:
-	ID ASSIGN expr (SEMI)?
-	| ID '(' expr ')'
-	| ID '(' parameters? ')'
-	| '{' expr '}'
+	ID ASSIGN expr
+	| ID '(' expr (COMMA expr)* ')'
+	| '{' (expr SEMI)+ '}'
 	| STR_CONST
-	| ID '(' STR_CONST ')'
-	| '(' STR_CONST ')'
 	| INT_CONST
-	| NEW ID
 	| NEW type
 	| ISVOID expr
 	| INT_CONST
-	| STR_CONST
 	| NOT expr
-	| LPAREN expr+? RPAREN
-	| ISVOID expr
-	| 'self' (SEMI)?
+	| LPAREN expr RPAREN
 	| 'true'
 	| 'false'
-	| 'void'
-	| expr DOT ID
-	| expr DOT ID LPAREN expr? RPAREN SEMI?
-	| expr DOT ID ASSIGN expr
-	| expr '@' type DOT ID LPAREN expr (SEMI expr)* RPAREN
-	| expr '~'
-    | unary_op expr (SEMI)?
-	| expr ('-' expr)+
-	| expr ('+' expr)+
-	| expr ('<' expr)+
-	| expr ('>' expr)+
+	| expr ('@' type)? DOT ID LPAREN expr (COMMA expr)* RPAREN
+	| '~' expr
+	| expr ('-' expr)
+	| expr ('+' expr)
+	| expr ('<' expr)
 	| expr '=' expr
-	| expr ('+' expr)+
-	| expr ('-' expr)+
-	| expr ('*' expr)+
-	| expr ('/' expr)+
-	| expr ('%' expr)+
-	| expr '^' expr
+	| expr ('*' expr)
+	| expr ('/' expr)
 	| expr '<=' expr
 	| ID
     | '(' expr ')';

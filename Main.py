@@ -14,19 +14,20 @@ import pydot
 from colorama import *
 
 class errorListener(ErrorListener):
-    def __init__(self):
+    def _init_(self):
         self.hasError = False
         self.listErrors = []
         pass
 
     def syntaxError(self, recognizer, offendingSymbol, line, column, msg, e):
         self.hasError = True
-        errorMsg = Fore.RED + f'Error encontrado en la línea {line}. Motivo de fallo: {offendingSymbol.text}' + Style.RESET_ALL
+        errorMsg = Fore.RED + f'Error encontrado en la línea {line}. ' \
+                f'Motivo de fallo: {msg}' + Style.RESET_ALL
         self.listErrors.append(errorMsg)
+
     
     def getHasError(self):
         return self.hasError
-
 class Lex_Ser():
     
     def main(self):

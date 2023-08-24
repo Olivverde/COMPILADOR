@@ -7,7 +7,7 @@ from testParser import testParser
 from testListener import testListener
 from antlr4.tree.Trees import Trees
 from prettytable.prettytable import NONE
-from SymbolsTable import *
+#from SymbolsTable import *
 import networkx as nx
 import matplotlib.pyplot as plt
 import pydot
@@ -33,8 +33,20 @@ class Lex_Ser():
     def main(self):
         
         # with open("testError.yapl", 'r') as file:
-        with open("test.yapl", 'r') as file:
+        with open("./Test/hello_world.cl", 'r') as file:
             input_stream = InputStream(file.read())
+            myError = ' '
+            lexer = testLexer(input_stream)
+            #lexer.removeErrorListeners()
+            token_stream = CommonTokenStream(lexer)
+            parser = testParser(token_stream)
+            #parser.addErrorListener(myError)
+            tree = parser.program()   
+            lisp_tree_str = tree.toStringTree(recog=parser)
+            print(lisp_tree_str)
+
+            
+            """ input_stream = InputStream(file.read())
             
             lexer = testLexer(input_stream)
             lexer.removeErrorListeners()
@@ -50,15 +62,15 @@ class Lex_Ser():
                 for i in myError.listErrors:
                     print(i)
             else:
-                printer = ShowTable()
+                #printer = ShowTable()
                 visitor = TransformDot()
                 visitor.visit(tree)
                 dot = visitor.getDot()
                 walkerTree = ParseTreeWalker() # recorrer este árbol de análisis y aplicar logica
-                walkerTree.walk(printer, tree)
+                #walkerTree.walk(printer, tree)
                 with open('ast.dot', 'w') as file:
                     file.write(dot)
-                print(Fore.GREEN +'Árbol generado con éxito, visualize: ' + Style.BRIGHT + "out.png" + Style.RESET_ALL)
+                print(Fore.GREEN +'Árbol generado con éxito, visualize: ' + Style.BRIGHT + "out.png" + Style.RESET_ALL) """
 
             
 class TransformDot(ParseTreeVisitor):

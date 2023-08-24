@@ -1,108 +1,104 @@
 grammar test;
 
-// Espacios en blanco y saltos de linea se ignoran
-WS: [ \t\r\n]+ -> skip;
+// Keywords
+CLASS           : 'class' | 'CLASS';
+ELSE            : 'else' |'ELSE';
+FI              : 'fi' |'FI';
+IF              : 'if'| 'IF';
+IN              : 'in' | 'IN';
+INHERITS        : 'inherits' | 'INHERITS';
+ISVOID          : 'isvoid' | 'ISVOID';
+LOOP            : 'loop' |'LOOP' ;
+POOL            : 'pool'| 'POOL' ;
+THEN            : 'then' | 'THEN' ;
+WHILE           : 'while' | 'WHILE' ;
+NEW             : 'new' |'NEW';
+NOT             : 'not' |'NOT';
+LET             : 'let' |'LET';
 
-LINE_COMMENT:
-	'//' .*? '\n' -> skip;
-
-BOOL: 'Bool';
-INT: 'Int';
-STRING: 'String';
-IO: 'IO';
-OBJECT: 'Object';
-SELF_TYPE: 'SELF_TYPE';
-NEW: 'new' | 'NEW' ;
-
-CLASS_RESERVED: 'class'|'CLASS';
-INHERITS_RESERVED: 'inherits' | 'INHERITS' ;
-IF_RESERVED: 'if' | 'IF' ;
-THEN_RESERVED: 'then' | 'THEN';
-ELSE_RESERVED: 'else' | 'ELSE';
-FI_RESERVED: 'fi' | 'FI' ;
-LET_RESERVED: 'let' | 'LET' ;
-IN_RESERVED: 'in' | 'IN' ;
-WHILE_RESERVED: 'while' | 'WHILE' ;
-
-CASE: 'case';
-OF: 'of';
-ESAC: 'esac';
-
-ISVOID: 'isvoid';
-NOT: 'not';
-
-type: ID | INT | STRING | BOOL | OBJECT | SELF_TYPE | IO ;
-binary_op: '+' | '-' | '*' | '=' | '@' | '/' | '<' | '<=';
-unary_op: '~' | NOT;
-
-COMMA: ',';
-DOT: '.';
-COLON: ':';
-SEMI: ';';
-ASSIGN: '<-';
-ARROW: '=>';
-LPAREN: '(';
-RPAREN: ')';
-LBRACE: '{';
-RBRACE: '}';
-COMMENT: '--' .*? ('\r'? '\n' | EOF) -> skip;
-
-ID: [a-zA-Z][a-zA-Z0-9_]*;
-INT_CONST: [0-9]+;
-STR_CONST: '"' ( '\\' [\\"] | ~[\\"\r\n] )* '"';
-
-program: (clas_list)*;
-
-clas_list: CLASS_RESERVED type (INHERITS_RESERVED type)? LBRACE (listOfFeature) RBRACE SEMI;
+TRUE            : 'true';
+FALSE           : 'false';
+BOOL            : 'Bool';
+INT             : 'Int';
+STRING          : 'String';
+VOID            : 'void';
+SELF            : 'self';
+SELF_TYPE       : 'SELF_TYPE';
 
 
-listOfFeature: feature* ;
+// Helpfull symbols
+SEMICOLON       : ';';
+COLON           : ':';
+LBRACE          : '{';
+RBRACE          : '}';
+LBRACKET        : '[';
+RBRACKET        : ']';
+LPAR            : '(';
+RPAR            : ')';
+COMMA           : ',';
+QUOTES          : '"';
+APOSTROPHE      : '\'';
+ADD             : '+';
+SUB             : '-';
+MULTIPLY        : '*';
+DIVIDE          : '/';
+NEGATION        : '~';
+LESS_OP         : '<';
+LESS_EQ_OP      : '<=';
+EQUAL_OP        : '=';
+DOT           : '.';
+AT              : '@';
+ASIGN           : '<-';
 
-formal: ID COLON type;
+// Basic expresions
 
-feature: attributesDef | method_definition;
+TYPE_ID         : [A-Z] ([a-zA-Z0-9_])*;
+VAR_NAME          : [a-zA-Z] ([a-zA-Z0-9_])*;
+INTEGER         : [0-9]+;
+DIGIT           : [0-9];
+STRING_LIT      : '"' ( '\\' [btnfr"'\\] | ~[\r\n\\"] )* '"'; // obtained from documentation
+BOOL_LIT        : TRUE | FALSE;
+COMMENT         : '--' .*? '\n' -> skip; // skip comment line starting with --
+COMMENT_2   : '..' .*? '..' -> skip; // skip comment between ..
+NEWLINE		    : ('\r'? '\n' | '\r')+ -> skip; // skip new line
+WS	    : [ \t\r\n\f\b]+ -> skip; // skip all kind of whitespaces
 
-attributesDef: ID COLON type ('<-' expr)? (LPAREN expr SEMI RPAREN)? SEMI;
+// Productions
 
-methodSimple:
-	ID LPAREN parameters? RPAREN SEMI;
+program         : (class_prod SEMICOLON)+;
+class_prod           : CLASS var_type (INHERITS var_type)? LBRACE (feature)* RBRACE;
+feature         : var_id LPAR (var_id COLON var_type (COMMA var_id COLON var_type)*)? RPAR COLON return_type LBRACE expr RBRACE SEMICOLON            # class_method
+                | var_id COLON var_type (ASIGN expr)? SEMICOLON                                                     # class_attribute
+                ;
 
-method_definition:
-	ID LPAREN parameters? RPAREN COLON type LBRACE block RBRACE SEMI;
+expr            : var_id ASIGN expr                                                                                 # assign_expr
+                | expr (AT var_type)? DOT var_id LPAR (expr (COMMA expr)*)? RPAR                                    # expr_expr
+                | var_id LPAR (expr (COMMA expr)*)? RPAR                                                            # method_call     
+                | IF expr THEN expr ELSE expr FI                                                                    # conditional_expr 
+                | WHILE expr LOOP expr POOL                                                                         # loop_expr                           
+                | LBRACE (expr SEMICOLON)+ RBRACE                                                                   # br_expr                       
+                | LET var_id COLON var_type (ASIGN expr)? (COMMA var_id COLON var_type (ASIGN expr)?)* IN expr      # let_expr
+                | NEW var_type                                                                                      # new_expr                           
+                | ISVOID expr                                                                                       # void_expr
+                | expr ADD expr                                                                                     # add_expr
+                | expr SUB expr                                                                                     # sub_expr                                           
+                | expr MULTIPLY expr                                                                                # mul_expr                       
+                | expr DIVIDE expr                                                                                  # div_expr                      
+                | NEGATION expr                                                                                     # neg_expr                                                                                   
+                | expr LESS_OP expr                                                                                 # less_expr
+                | expr LESS_EQ_OP expr                                                                              # lessEq_expr
+                | expr EQUAL_OP expr                                                                                # eq_expr
+                | NOT expr                                                                                          # not_expr                                
+                | LPAR expr RPAR                                                                                    # par_expr
+                | var_id                                                                                            # var_expr                                           
+                | INTEGER                                                                                           # int_expr
+                | STRING_LIT                                                                                        # string_expr
+                | TRUE                                                                                              # true_expr
+                | FALSE                                                                                             # false_expr
+                ;
 
-let_declaration: (LPAREN)? LET_RESERVED let_binding (',' let_binding)* (IN_RESERVED (LBRACE)? (expr|whileRule|ifRule|let_declaration (SEMI)?)* (RBRACE)?)? (RPAREN)? (SEMI)?;
-let_binding: ID ':' type ('<-' expr)? (type)?;
+var_type        : INT | BOOL | STRING | TYPE_ID | VOID | SELF_TYPE;
+var_id          : VAR_NAME | SELF;
+return_type     : var_type;
 
-ifRule: IF_RESERVED expr (THEN_RESERVED (expr|whileRule|ifRule|let_declaration)*)* (ELSE_RESERVED (expr|whileRule|ifRule|let_declaration))? FI_RESERVED;
-whileRule: WHILE_RESERVED (expr|whileRule|ifRule)* 'loop' (LBRACE)?(expr|whileRule|ifRule)*(RBRACE)? 'pool';
-
-block: (LBRACE)? (ifRule* | whileRule* | let_declaration* | expr*) (RBRACE)?;
-
-parameters: formal (COMMA formal)*;
-
-expr:
-	ID ASSIGN expr
-	| ID '(' expr (COMMA expr)* ')'
-	| '{' (expr SEMI)+ '}'
-	| STR_CONST
-	| INT_CONST
-	| NEW type
-	| ISVOID expr
-	| INT_CONST
-	| NOT expr
-	| LPAREN expr RPAREN
-	| 'true'
-	| 'false'
-	| expr ('@' type)? DOT ID LPAREN expr (COMMA expr)* RPAREN
-	| '~' expr
-	| expr ('-' expr)
-	| expr ('+' expr)
-	| expr ('<' expr)
-	| expr '=' expr
-	| expr ('*' expr)
-	| expr ('/' expr)
-	| expr '<=' expr
-	| ID
-    | '(' expr ')';
-
-ErrorChar : . ;
+ERR_TOKEN : . ;

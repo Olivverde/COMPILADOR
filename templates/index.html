@@ -17,6 +17,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <link rel="stylesheet" href="./assets/consola.css">
     <script src="https://d3js.org/d3.v3.min.js" charset="utf-8"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
     <title>Compilador</title>
@@ -126,7 +127,7 @@
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav ml-auto">
                 <li class="nav-item">
-                    <button id="btn-compile" class="btn btn-primary nav-link" onclick="compilar()">Compilar</button>
+                    <button id="btn-compile" class="btn btn-primary nav-link">Compilar</button>
                 </li>
                 <li class="nav-item">
                     <button id="btn-clear" class="btn btn-secondary nav-link" onclick="limpiar()">Limpiar</button>
@@ -204,33 +205,6 @@
         updateLineNumbers();
 
     </script>
-
-    <script>
-        function compilar() {
-            // Obtener el contenido del textarea de entrada
-            var code = document.getElementById("input").value;
-
-            // Realizar una solicitud POST al servidor con el contenido del código
-            fetch('/compile', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ code: code })
-            })
-            .then(response => response.json())
-            .then(data => {
-                // Actualizar el textarea de salida con los resultados
-                document.getElementById("output").value = data.output;
-
-            })
-            .catch(error => {
-                console.error('Error:', error);
-            });
-        }
-
-    </script>
-
 </body>
 
 </html>

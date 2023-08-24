@@ -8,6 +8,8 @@ from testListener import testListener
 from antlr4.tree.Trees import Trees
 from prettytable.prettytable import NONE
 from SymbolsTable import *
+import networkx as nx
+import matplotlib.pyplot as plt
 import pydot
 from colorama import *
 
@@ -28,7 +30,34 @@ class errorListener(ErrorListener):
 class Lex_Ser():
     
     def main(self):
-            pass
+        
+        # with open("testError.yapl", 'r') as file:
+        with open("test.yapl", 'r') as file:
+            input_stream = InputStream(file.read())
+            
+            lexer = testLexer(input_stream)
+            lexer.removeErrorListeners()
+            token_stream = CommonTokenStream(lexer)
+            parser = testParser(token_stream)
+            myError = errorListener() 
+            parser.removeErrorListeners()
+            parser.addErrorListener(myError)
+            tree = parser.program()  
+
+            if myError.getHasError():
+                print(Style.BRIGHT + "Se ha(n) encontrado error(es)" + Style.RESET_ALL)
+                for i in myError.listErrors:
+                    print(i)
+            else:
+                printer = ShowTable()
+                visitor = TransformDot()
+                visitor.visit(tree)
+                dot = visitor.getDot()
+                walkerTree = ParseTreeWalker() # recorrer este árbol de análisis y aplicar logica
+                walkerTree.walk(printer, tree)
+                with open('ast.dot', 'w') as file:
+                    file.write(dot)
+                print(Fore.GREEN +'Árbol generado con éxito, visualize: ' + Style.BRIGHT + "out.png" + Style.RESET_ALL)
 
             
 class TransformDot(ParseTreeVisitor):
@@ -60,7 +89,21 @@ class TransformDot(ParseTreeVisitor):
 LS = Lex_Ser()
 LS.main()
     
-graphs = pydot.graph_from_dot_file('ast.dot')
-graph = graphs[0]
-graph.write_png('out.png')
-    
+with open('ast.dot', 'r') as dot_file:
+    dot_contents = dot_file.read()
+
+graph = pydot.graph_from_dot_data(dot_contents)[0]
+
+nx_graph = nx.DiGraph()
+
+for edge in graph.get_edges():
+    source = edge.get_source()
+    target = edge.get_destination()
+    nx_graph.add_edge(source, target)
+
+pos = nx.spring_layout(nx_graph)  # Puedes cambiar el layout según tus preferencias
+nx.draw(nx_graph, pos, with_labels=True, node_size=1000, font_size=10, font_color='black')
+
+plt.savefig('out.png', format='png')
+
+plt.show()

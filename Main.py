@@ -14,10 +14,10 @@ import pydot
 from colorama import *
 
 class errorListener(ErrorListener):
-    def _init_(self):
+    def __init__(self):
+        super().__init__()  # Llamada al constructor de la clase base
         self.hasError = False
         self.listErrors = []
-        pass
 
     def syntaxError(self, recognizer, offendingSymbol, line, column, msg, e):
         self.hasError = True
@@ -25,25 +25,26 @@ class errorListener(ErrorListener):
                 f'Motivo de fallo: {msg}' + Style.RESET_ALL
         self.listErrors.append(errorMsg)
 
-    
     def getHasError(self):
         return self.hasError
+
+# ...
+
 class Lex_Ser():
     
     def main(self):
-        
-        # with open("testError.yapl", 'r') as file:
         with open("./Test/hello_world.cl", 'r') as file:
             input_stream = InputStream(file.read())
-            myError = ' '
+            myError = errorListener()  # Cambio a minúsculas para la instancia
             lexer = testLexer(input_stream)
-            #lexer.removeErrorListeners()
             token_stream = CommonTokenStream(lexer)
             parser = testParser(token_stream)
-            #parser.addErrorListener(myError)
+            parser.addErrorListener(myError)
             tree = parser.program()   
             lisp_tree_str = tree.toStringTree(recog=parser)
-            print(lisp_tree_str)
+            
+            if not myError.getHasError():
+                print("No hay errores.")
 
             
             """ input_stream = InputStream(file.read())
@@ -119,4 +120,4 @@ nx.draw(nx_graph, pos, with_labels=True, node_size=1000, font_size=10, font_colo
 
 plt.savefig('out.png', format='png')
 
-plt.show()
+#plt.show()

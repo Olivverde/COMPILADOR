@@ -221,7 +221,7 @@ class ShowTable(testListener):
         self.root = ctx
         self.current_scope = SymbolsTable()
     
-    def enterClas_list(self, ctx: testParser.Clas_listContext):
+    def enterClas_list(self, ctx: testParser.Class_prodContext):
         class_type = ctx.type_()[0].getText()
         try:
             inheritance = ctx.type_()[1].getText()
@@ -236,7 +236,7 @@ class ShowTable(testListener):
             col = ctx.type_()[0].start.column
             self.errors.add(line, col, "Clase duplicada: " + class_type)
 
-    def exitClas_list(self, ctx: testParser.Clas_listContext):
+    def exitClas_list(self, ctx: testParser.Class_prodContext):
         class_type = ctx.type_()[0].getText()
         self.parameter_table.clear()
         # self.popscope()
@@ -251,7 +251,7 @@ class ShowTable(testListener):
         
         self.node_type[ctx] = self.VOID
 
-    def enterMethod_definition(self, ctx: testParser.Method_definitionContext):
+    def enterMethod_definition(self, ctx: testParser.ProgramContext):
         method_type = ctx.type_().getText()
         method_name = ctx.ID().getText()
         parameters = []

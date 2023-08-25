@@ -7,7 +7,6 @@ from testParser import testParser
 from testListener import testListener
 from antlr4.tree.Trees import Trees
 from prettytable.prettytable import NONE
-#from SymbolsTable import *
 import networkx as nx
 import matplotlib.pyplot as plt
 import pydot
@@ -21,19 +20,18 @@ class errorListener(ErrorListener):
 
     def syntaxError(self, recognizer, offendingSymbol, line, column, msg, e):
         self.hasError = True
-        errorMsg = Fore.RED + f'Error encontrado en la línea {line}. ' \
-                f'Motivo de fallo: {msg}' + Style.RESET_ALL
+        errorMsg = f'- Error encontrado en la línea {line}. ' \
+                f'Motivo de fallo: {msg}'
         self.listErrors.append(errorMsg)
 
     def getHasError(self):
         return self.hasError
 
-# ...
-
 class Lex_Ser():
     
     def main(self):
-        with open("./Test/hello_world.cl", 'r') as file:
+        pass
+        """  with open("./Test/hello_world.cl", 'r') as file:
             input_stream = InputStream(file.read())
             myError = errorListener()  # Cambio a minúsculas para la instancia
             lexer = testLexer(input_stream)
@@ -45,35 +43,8 @@ class Lex_Ser():
             
             if not myError.getHasError():
                 print("No hay errores.")
-
-            
-            """ input_stream = InputStream(file.read())
-            
-            lexer = testLexer(input_stream)
-            lexer.removeErrorListeners()
-            token_stream = CommonTokenStream(lexer)
-            parser = testParser(token_stream)
-            myError = errorListener() 
-            parser.removeErrorListeners()
-            parser.addErrorListener(myError)
-            tree = parser.program()  
-
-            if myError.getHasError():
-                print(Style.BRIGHT + "Se ha(n) encontrado error(es)" + Style.RESET_ALL)
-                for i in myError.listErrors:
-                    print(i)
-            else:
-                #printer = ShowTable()
-                visitor = TransformDot()
-                visitor.visit(tree)
-                dot = visitor.getDot()
-                walkerTree = ParseTreeWalker() # recorrer este árbol de análisis y aplicar logica
-                #walkerTree.walk(printer, tree)
-                with open('ast.dot', 'w') as file:
-                    file.write(dot)
-                print(Fore.GREEN +'Árbol generado con éxito, visualize: ' + Style.BRIGHT + "out.png" + Style.RESET_ALL) """
-
-            
+        """
+           
 class TransformDot(ParseTreeVisitor):
     def __init__(self):
         super().__init__()

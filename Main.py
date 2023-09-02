@@ -1,16 +1,13 @@
+
+# LIBS
 from antlr4 import *
-from antlr4 import ParseTreeVisitor
-from antlr4.tree.Tree import TerminalNodeImpl
-from antlr4.error.ErrorListener import ErrorListener
-from testLexer import testLexer
-from testParser import testParser
-from testListener import testListener
-from antlr4.tree.Trees import Trees
-from prettytable.prettytable import NONE
-import networkx as nx
-import matplotlib.pyplot as plt
-import pydot
 from colorama import *
+import antlr4.Utils as Utils
+from antlr4.tree.Trees import Trees
+from dist.testLexer import testLexer
+from dist.testParser import testParser
+from dist.testListener import testListener
+from antlr4.error.ErrorListener import ErrorListener
 
 class errorListener(ErrorListener):
     def __init__(self):

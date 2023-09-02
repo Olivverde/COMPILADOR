@@ -49,7 +49,7 @@ def upload():
     content = ""
     if 'file' in request.files:
         file = request.files['file']
-        if file.filename != '':
+        if file.filename != '':   
             content = file.read().decode('utf-8')
     return render_template('index.html', content=content)
 

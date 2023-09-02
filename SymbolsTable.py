@@ -4,6 +4,7 @@ from testParser import testParser
 from itertools import groupby
 from colorama import *
 
+
 class SymbolsTable():
     def __init__(self) -> None:
         self.pretty_table = PrettyTable() #Implementación de tabla con formato correcto
@@ -272,12 +273,16 @@ class ShowTable(testListener):
             hasError = self.childrenhaserror(ctx)
             if hasError:
                 print(Fore.RED +  Style.BRIGHT + "Se han encontrado errores" + Style.RESET_ALL)
+        
 
 
         self.current_scope.totable()
-
         self.class_table.totable()
         self.method_table.totable()
-
         
+        
+        
+        
+        
+
 

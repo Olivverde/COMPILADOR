@@ -92,3 +92,4 @@ nx.draw(nx_graph, pos, with_labels=True, node_size=1000, font_size=10, font_colo
 plt.savefig('out.png', format='png')
 
 #plt.show()
+

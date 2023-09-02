@@ -1,4 +1,4 @@
-// Generated from c:\Users\laury\Documents\UVG\Compis\LAB0\LAB0-Compiladores\test.g4 by ANTLR 4.9.2
+// Generated from c:\Users\olive\OneDrive\Escritorio\UVG\SEM10\Compiladores\COMPILADOR\test.g4 by ANTLR 4.9.2
 import org.antlr.v4.runtime.Lexer;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.Token;

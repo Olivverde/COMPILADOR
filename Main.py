@@ -9,6 +9,7 @@ from dist.testParser import testParser
 from dist.testListener import testListener
 from antlr4.error.ErrorListener import ErrorListener
 
+
 class errorListener(ErrorListener):
     def __init__(self):
         super().__init__()  # Llamada al constructor de la clase base
@@ -67,26 +68,155 @@ class TransformDot(ParseTreeVisitor):
     def getDot(self):
         return self.dot + '}\n'
 
-    
-LS = Lex_Ser()
-LS.main()
-    
-with open('ast.dot', 'r') as dot_file:
-    dot_contents = dot_file.read()
 
-graph = pydot.graph_from_dot_data(dot_contents)[0]
+"""
+        _Author_
+        Oliver
+        
+        _summary_
+        This class provides utility methods for working with parse trees, specifically for generating a pretty-printed representation of a parse tree
 
-nx_graph = nx.DiGraph()
+        _Attributes_
+            eol: A string representing the end-of-line character(s).
+            idents: A string representing the indentation used for each level of the parse tree.
+            level: An integer representing the current indentation level. 
+"""
 
-for edge in graph.get_edges():
-    source = edge.get_source()
-    target = edge.get_destination()
-    nx_graph.add_edge(source, target)
+class TreeUtils:
+    def __init__(self):
+        # Initialize constants for end-of-line and indentation
+        self.eol = "\n"
+        self.idents = "  "  # Two spaces for each level of indentation
+        self.level = 0
 
-pos = nx.spring_layout(nx_graph)  # Puedes cambiar el layout según tus preferencias
-nx.draw(nx_graph, pos, with_labels=True, node_size=1000, font_size=10, font_color='black')
+    def toPrettyTree(self, t, rulenames):
+        # Reset the indentation level to 0
+        self.level = 0
+        # Start processing the tree and return the formatted result
+        return self.process(t, rulenames).replace("(?m)^\\s+$", "").replace("\\r?\\n\\r?\\n", self.eol)
 
-plt.savefig('out.png', format='png')
+    def process(self, t, ruleNames):
+        if t.getChildCount() == 0:
+            # If the current node has no children, escape whitespace in its text
+            return Utils.escapeWhitespace(Trees.getNodeText(t, ruleNames), False)
+        sb = ""
+        sb += self.lead(self.level)  # Add indentation for the current level
+        self.level += 1  # Increase the indentation level
+        s = Utils.escapeWhitespace(Trees.getNodeText(t, ruleNames), False)
+        sb += s + " "  # Append the text of the current node
+        for i in range(t.getChildCount()):
+            # Recursively process child nodes
+            sb += self.process(t.getChild(i), ruleNames)
+        
+        self.level -= 1  # Decrease the indentation level
+        sb += self.lead(self.level)  # Add indentation for the current level
+        
+        return sb
 
-#plt.show()
+    def lead(self, level):
+        sb = ""
+        if level > 0:
+            # Add the appropriate amount of indentation for the current level
+            sb += self.eol
+            for i in range(level):
+                sb += self.idents
+
+        return sb
+
+
+"""
+_Author_
+Oliver
+
+_summary_
+Checks if a given token represents an error (not equal to the error token testLexer.ERR_TOKEN).
+
+_Attributes_
+    token: The actual token value.
+    line: The line number where the token was found.
+    token_type: The type of the token.
+"""
+
+def getError(token):
+    # Check if the given token is not equal to the error token (testLexer.ERR_TOKEN)
+    return token != testLexer.ERR_TOKEN
+
+
+
+"""
+_Author_
+Oliver
+
+_summary_
+Represents a compiler that performs lexical, syntax, and semantic analysis on a source code file.
+"""
+
+class Compiler:
+    def __init__(self, file):
+        # Initialize the compiler with the given file name
+        filename = file
+        self.LexErr = None  # Initialize lexical error as None
+        self.SintErr = None  # Initialize syntax error as None
+        self.SemErr = None  # Initialize semantic error as None
+
+        print(f'Parsing file: {filename}')
+
+        # Create a FileStream and lexer
+        inputStream = FileStream(filename)
+        lexer = testLexer(inputStream)
+        stream = CommonTokenStream(lexer)
+
+        contentHasErr = False
+        errorTks = []
+        actualTk = lexer.nextToken()
+
+        # Token scanning loop
+        while actualTk.type != Token.EOF:
+            is_error = getError(actualTk.type)
+            if not is_error:
+                errorTks.append(f'-> Unrecognized character: {actualTk.text} at line: {actualTk.line}\n')
+                contentHasErr = True
+            
+            actualTk = lexer.nextToken()
+
+        # Determine if lexical errors occurred
+        if not contentHasErr:
+            self.LexErr = None
+        else:
+            self.LexErr = errorTks
+
+        lexer.reset()
+
+        stream = CommonTokenStream(lexer)
+        parser = testParser(stream)
+
+        parser.removeErrorListeners()
+        listener = MyErrorListener() #################### PENDING
+        parser.addErrorListener(listener)
+        parser.buildParseTrees = True
+        tree = parser.program()
+        rulenames = parser.ruleNames
+
+        # Generate a pretty-printed parse tree
+        self.prettyTree = TreeUtils().toPrettyTree(tree, rulenames)
+
+        self.listErr = listener.getErrors()
+
+        # Determine if syntax errors occurred
+        if len(self.listErr) > 0:
+            sintErr = ""
+            for err in self.listErr:
+                sintErr += err + "\n"
+            self.SintErr = sintErr
+        
+        # If no syntax errors, proceed with semantic analysis
+        if len(self.listErr) <= 0:
+            self.printer = YaplPrinter() ########### PENDING
+            walker = ParseTreeWalker()
+            walker.walk(self.printer, tree)
+            if len(self.printer.my_errors.get_errors()) > 0:
+                SemErr = ""
+                for err in self.printer.my_errors.get_errors():
+                    SemErr += err + "\n"
+                self.SemErr = SemErr
 

@@ -1,74 +1,114 @@
-from prettytable import PrettyTable
-from testListener import testListener
-from testParser import testParser
-from itertools import groupby
 from colorama import *
+from itertools import groupby
+from prettytable import PrettyTable
+from dist.testParser import testParser
+from dist.testListener import testListener
 
+"""
+        _Author_
+        Oliver
+        
+        _summary_
+        Represents a symbol table used for tracking symbols (variables, functions, etc.) in a program's scope. 
+"""
+class SymbolTable():
+    def __init__(self, name):
+        # Initialize the symbol table with a name, an empty table, and a PrettyTable for formatting.
+        self.scope_name = name
+        self.to_pretty = PrettyTable()
+        self.symbol_table = []  # List to store symbols
+        self.this_off = 0  # Offset tracker
 
-class SymbolsTable():
-    def __init__(self) -> None:
-        self.pretty_table = PrettyTable() #Implementación de tabla con formato correcto
-        self._symbols = []
-    
-    def add(self, type, id, size, isParameter):
-        self._symbols.append({
-            'Type': type,
-            'ID': id,
-            'Size': size,
-            'IsParameter': isParameter
+    def add(self, type, id, size, off, isPar):
+        # Add a new symbol to the symbol table.
+        # Parameters:
+        #   - type: Data type of the symbol.
+        #   - id: Identifier name.
+        #   - size: Size of the symbol.
+        #   - off: Offset of the symbol.
+        #   - isPar: Indicates if the symbol is a parameter.
+        self.symbol_table.append({
+            "Type": type,
+            "ID": id,
+            "Size": size,
+            "Offset": off,
+            "Is Parameter": isPar
         })
-    
-    def lookup(self, id):
-        symbols_copy = self._symbols.copy()
-        symbols_copy.reverse()
-        for symbol in symbols_copy:
-            if symbol['ID'] == id:
+        self.this_off += size  # Update the current offset
+
+    def search(self, var_id):
+        # Search for a symbol by its identifier.
+        # Parameters:
+        #   - var_id: Identifier name to search for.
+        # Returns:
+        #   - The symbol if found, None otherwise.
+        this_symb = self.symbol_table.copy()
+        this_symb.reverse()
+        for symbol in this_symb:
+            if symbol["ID"] == var_id:
                 return symbol
-        return 0
+        return None  # Symbol not found
 
-    def getsize(self):
-        return sum(symbol['size'] for symbol in self._symbols)
-    
-    def totable(self):
-        self.pretty_table.field_names = ['Type', 'ID', 'Size','IsParameter']
-        for i in self._symbols:
-            self.pretty_table.add_row(list(i.values()))
+    def getSize(self):
+        # Calculate and return the total size of symbols in the symbol table.
+        return sum([s["Size"] for s in self.symbol_table])
 
-        print(Fore.YELLOW + "\nSímbolos" + Style.RESET_ALL)
-        print(self.pretty_table)
-        self.pretty_table.clear_rows()
+    def toTable(self):
+        # Display the symbol table in a formatted table.
+        self.to_pretty.field_names = ["Type", "ID", "Size", "Offset", "Is Parameter"]
+        for symbol in self.symbol_table:
+            self.to_pretty.add_row(list(symbol.values()))
+        print(self.to_pretty)
+        self.to_pretty.clear_rows()  # Clear the table for future use
 
+"""
+        _Author_
+        Oliver
+        
+        _summary_
+        Represents a parameter table used for tracking function parameters.
+"""
 class ParameterTable():
-    def __init__(self) -> None:
-        self.pretty_table = PrettyTable()
-        self._symbols = []
-        self.pretty_table.field_names = ['Type', 'ID']
-    
-    def add(self, type, id):
-        self._symbols.append({
-            'Type': type,
-            'ID': id,
+    def __init__(self):
+        # Initialize the parameter table with an empty table and a PrettyTable for formatting.
+        self.to_pretty = PrettyTable()
+        self.param_table = []  # List to store parameters
+
+    def add_param(self, type, id):
+        # Add a new parameter to the parameter table.
+        # Parameters:
+        #   - type: Data type of the parameter.
+        #   - id: Identifier name of the parameter.
+        self.param_table.append({
+            "Type": type,
+            "ID": id
         })
-    
-    def lookup(self, variable):
-        symbols_copy = self._symbols.copy()
-        symbols_copy.reverse()
-        for symbol in symbols_copy:
-            if symbol['ID'] == variable:
-                return symbol
-        return 0
 
-    def totable(self):
-        for i in self._symbols:
-            self.pretty_table.add_row(list(i.values()))
+    def search(self, id):
+        # Search for a parameter by its identifier.
+        # Parameters:
+        #   - id: Identifier name to search for.
+        # Returns:
+        #   - The parameter if found, None otherwise.
+        this_par = self.param_table.copy()
+        this_par.reverse()
+        for par in this_par:
+            if par["ID"] == id:
+                return par
+        return None  # Parameter not found
 
-        print(Fore.MAGENTA + "\nParámetros" + Style.RESET_ALL)
-        print(self.pretty_table)
-        self.pretty_table.clear_rows()
-    
-    def clear(self):
-        self.totable()
-        self._symbols = []
+    def toTable(self):
+        # Display the parameter table in a formatted table.
+        self.to_pretty.field_names = ["Type", "ID"]
+        for par in self.param_table:
+            self.to_pretty.add_row(list(par.values()))
+        print(self.to_pretty)
+        self.to_pretty.clear_rows()  # Clear the table for future use
+
+    def free(self):
+        # Display the parameter table and then clear it.
+        self.toTable()
+        self.param_table = []  # Clear the parameter table
 
 
 class ClassTable():
@@ -125,7 +165,7 @@ class MethodTable():
         print(self.pretty_table)
         self.pretty_table.clear_rows()
     
-    
+  
 class TypeTable():
     def __init__(self) -> None:
         self.PRIMITIVE = 'primitive'

@@ -1,12 +1,23 @@
 
 # LIBS
+
+import re
 from antlr4 import *
+from cmath import exp
 from colorama import *
+from re import S, search
+from SymbolsTable import *
+from operator import truediv
 import antlr4.Utils as Utils
+from itertools import groupby
+from tkinter.messagebox import YES
 from antlr4.tree.Trees import Trees
+from multiprocessing import context
 from dist.testLexer import testLexer
 from dist.testParser import testParser
 from dist.testListener import testListener
+from antlr4.tree.Trees import TerminalNode
+from unittest.mock import NonCallableMagicMock
 from antlr4.error.ErrorListener import ErrorListener
 
 
@@ -70,16 +81,16 @@ class TransformDot(ParseTreeVisitor):
 
 
 """
-        _Author_
-        Oliver
-        
-        _summary_
-        This class provides utility methods for working with parse trees, specifically for generating a pretty-printed representation of a parse tree
+_Author_
+Oliver
 
-        _Attributes_
-            eol: A string representing the end-of-line character(s).
-            idents: A string representing the indentation used for each level of the parse tree.
-            level: An integer representing the current indentation level. 
+_summary_
+This class provides utility methods for working with parse trees, specifically for generating a pretty-printed representation of a parse tree
+
+_Attributes_
+    eol: A string representing the end-of-line character(s).
+    idents: A string representing the indentation used for each level of the parse tree.
+    level: An integer representing the current indentation level. 
 """
 
 class TreeUtils:
@@ -219,4 +230,15 @@ class Compiler:
                 for err in self.printer.my_errors.get_errors():
                     SemErr += err + "\n"
                 self.SemErr = SemErr
+
+
+"""
+_Author_
+Oliver & Laura
+
+_summary_
+PRINTERS COMING SOON
+"""
+
+
 

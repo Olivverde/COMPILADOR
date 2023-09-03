@@ -293,7 +293,7 @@ class ShowTable(testListener):
     
     def newscope(self):
         self.scopes.append(self.current_scope)
-        self.current_scope = SymbolsTable()
+        self.current_scope = SymbolTable()
     
     def find(self, var):
         lookup = self.current_scope.lookup(var)
@@ -323,7 +323,7 @@ class ShowTable(testListener):
 
     def enterProgram(self, ctx: testParser.ProgramContext):
         self.root = ctx
-        self.current_scope = SymbolsTable()
+        self.current_scope = SymbolTable()
     
     def enterClas_list(self, ctx: testParser.Class_prodContext):
         class_type = ctx.type_()[0].getText()

@@ -140,6 +140,31 @@ _Author_
 Oliver
 
 _summary_
+Represents a token in the source code with attributes for token value, line number, and token type.
+
+_Attributes_
+    token: The actual token value.
+    line: The line number where the token was found.
+    token_type: The type of the token.
+"""
+
+class Tokens():
+    def __init__(self, token, line, token_type):
+        # Initialize a Token object with token value, line number, and token type
+        self.token = token  # The actual token value
+        self.line = line    # The line number where the token was found
+        self.token_type = token_type  # The type of the token
+
+# Example usage:
+# my_token = Token("my_identifier", 10, "IDENTIFIER")
+
+
+
+"""
+_Author_
+Oliver
+
+_summary_
 Checks if a given token represents an error (not equal to the error token testLexer.ERR_TOKEN).
 
 _Attributes_

@@ -137,33 +137,66 @@ class ClassTable():
         self.pretty_table.clear_rows()
 
 
+"""
+        _Author_
+        Oliver
+        
+        _summary_
+        Represents a table for managing methods and their properties within a compiler or interpreter.
+"""
 class MethodTable():
+    def __init__(self):
+        # Initialize the method table with a PrettyTable for formatting.
+        self.to_pretty = PrettyTable()
 
-    def __init__(self) -> None:
-        self.pretty_table = PrettyTable()
-        self._methods = []
+        # Initialize the method table with default method entries.
+        self.method_table = []
+        self.add("Object", "abort", [], "Object")
+        self.add("String", "type_name", [], "Object")
+        self.add("Object", "copy", [], "Object")
 
-    def add(self, type, id, parameters):
-        self._methods.append({
-            'Type': type,
-            'ID': id,
-            'Parameters': parameters,
+        self.add("IO", "out_string", [{'type': 'String', 'id': 'x'}], "IO")
+        self.add("String", "in_string", [], "IO")
+        self.add("IO", "out_int", [{'type': 'Int', 'id': 'x'}], "IO")
+        self.add("Int", "in_int", [], "IO")
+
+        self.add("Int", "length", [], "String")
+        self.add("String", "concat", [{'type': 'String', 'id': 's'}], "String")
+        self.add("String", "substr", [{'type': 'Int', 'id': 'i'},{'type': 'Int', 'id': 'l'}], "String")
+
+    def add(self, type, id, para, parent):
+        # Add a new method entry to the method table.
+        # Parameters:
+        #   - type: The return type of the method.
+        #   - id: The method name.
+        #   - para: A list of method parameters with their types and identifiers.
+        #   - parent: The parent class of the method.
+        self.method_table.append({
+            "type": type,
+            "id": id,
+            "param": para,
+            "parent": parent
         })
-    
-    def lookup(self, variable):
-        for method in self._methods:
-            if method['ID'] == variable:
-                return method
-        return 0
-    
-    def totable(self):
-        self.pretty_table.field_names = ['Type', 'ID', 'Parameters']
-        for i in self._methods:
-            self.pretty_table.add_row(list(i.values()))
 
-        print(Fore.YELLOW + "\nMétodos" + Style.RESET_ALL)
-        print(self.pretty_table)
-        self.pretty_table.clear_rows()
+    def search(self, id):
+        # Search for a method by its identifier.
+        # Parameters:
+        #   - id: The method name to search for.
+        # Returns:
+        #   - The method entry if found, None otherwise.
+        for method in self.method_table:
+            if method["id"] == id:
+                return method
+        return None  # Method not found
+
+    def toTable(self):
+        # Display the method table in a formatted table.
+        self.to_pretty.field_names = ["Type", "Id", "Parameters", "Parent"]
+        for method in self.method_table:
+            self.to_pretty.add_row(list(method.values()))
+        print(self.to_pretty)
+        self.to_pretty.clear_rows()  # Clear the table for future use
+
     
   
 class TypeTable():

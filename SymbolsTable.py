@@ -166,34 +166,64 @@ class MethodTable():
         self.pretty_table.clear_rows()
     
   
+"""
+        _Author_
+        Laura
+        
+        _summary_
+        Represents a symbol table used for tracking symbols (variables, functions, etc.) in a program's scope. 
+"""
 class TypeTable():
-    def __init__(self) -> None:
-        self.PRIMITIVE = 'primitive'
-        self.OBJECT = 'object'
-        self.IO = 'io'
+    def __init__(self):
+        # Initialize the type table with a PrettyTable for formatting.
+        self.to_pretty = PrettyTable()
 
-        self._types = []
-        self.add('int', self.PRIMITIVE, 0);
-        self.add('string', self.PRIMITIVE, '""')
-        self.add('bool', self.PRIMITIVE, False)
-        self.add('void', self.PRIMITIVE, None)
+        # Constants for type descriptions
+        self.PRIMITIVE = 'primitive'
+        self.CLASS = 'object'
+
+        # Initialize the type table with default primitive and class types
+        self.type_table = []
+        self.add('Int', 4, self.PRIMITIVE)
+        self.add('String', 2, self.PRIMITIVE)
+        self.add('Bool', 1, self.PRIMITIVE)
+        self.add('void', 0, self.PRIMITIVE)
+        self.add('SELF_TYPE', 0, self.CLASS)
+        self.add('Object', 0, self.CLASS)
+        self.add('IO', 0, self.CLASS)
     
-    def add(self, type, description, default_value):
-        self._types.append({
-            'Type': type,
-            'Description': description,
-            'Default': default_value
+    def add(self, type, size, desc):
+        # Add a new type entry to the type table.
+        # Parameters:
+        #   - type: The data type.
+        #   - size: The size of the type.
+        #   - desc: The type description (primitive or class).
+        self.type_table.append({
+            "type": type,
+            "size": size,
+            "desc": desc
         })
     
-    def lookup(self, type):
-        types_copy = self._types.copy()
-        types_copy.reverse()
-        for type in types_copy:
-            if type['Type'] == type:
-                return type
-        return 0
+    def search(self, type):
+        # Search for a type by its name.
+        # Parameters:
+        #   - type: The type name to search for.
+        # Returns:
+        #   - The type entry if found, None otherwise.
+        this_symb = self.type_table.copy()
+        this_symb.reverse()
+        for symbol in this_symb:
+            if symbol["type"] == type:
+                return symbol
+        return None  # Type not found
 
-
+    def toTable(self):
+        # Display the type table in a formatted table.
+        self.to_pretty.field_names = ["Type", "Size", "Description"]
+        for symbol in self.type_table:
+            self.to_pretty.add_row(list(symbol.values()))
+        print(self.to_pretty)
+        self.to_pretty.clear_rows()  # Clear the table for future use
 class ShowTable(testListener):
     def __init__(self) -> None:
         self.root = None

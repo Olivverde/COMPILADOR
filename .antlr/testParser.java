@@ -1,4 +1,4 @@
-// Generated from c:\Users\olive\OneDrive\Escritorio\UVG\SEM10\Compiladores\COMPILADOR\test.g4 by ANTLR 4.9.2
+// Generated from c:\Users\laury\Documents\UVG\Compis\LAB0\LAB0-Compiladores\test.g4 by ANTLR 4.9.2
 import org.antlr.v4.runtime.atn.*;
 import org.antlr.v4.runtime.dfa.DFA;
 import org.antlr.v4.runtime.*;
@@ -23,7 +23,7 @@ public class testParser extends Parser {
 		QUOTES=32, APOSTROPHE=33, ADD=34, SUB=35, MULTIPLY=36, DIVIDE=37, NEGATION=38, 
 		LESS_OP=39, LESS_EQ_OP=40, EQUAL_OP=41, DOT=42, AT=43, ASIGN=44, TYPE_ID=45, 
 		VAR_NAME=46, INTEGER=47, DIGIT=48, STRING_LIT=49, BOOL_LIT=50, COMMENT=51, 
-		COMMENT_2=52, NEWLINE=53, WS=54, ERR_TOKEN=55;
+		COMMENT_2=52, COMMENT_3=53, NEWLINE=54, WS=55, ERR_TOKEN=56;
 	public static final int
 		RULE_program = 0, RULE_class_prod = 1, RULE_feature = 2, RULE_expr = 3, 
 		RULE_var_type = 4, RULE_var_id = 5, RULE_return_type = 6;
@@ -53,7 +53,7 @@ public class testParser extends Parser {
 			"APOSTROPHE", "ADD", "SUB", "MULTIPLY", "DIVIDE", "NEGATION", "LESS_OP", 
 			"LESS_EQ_OP", "EQUAL_OP", "DOT", "AT", "ASIGN", "TYPE_ID", "VAR_NAME", 
 			"INTEGER", "DIGIT", "STRING_LIT", "BOOL_LIT", "COMMENT", "COMMENT_2", 
-			"NEWLINE", "WS", "ERR_TOKEN"
+			"COMMENT_3", "NEWLINE", "WS", "ERR_TOKEN"
 		};
 	}
 	private static final String[] _SYMBOLIC_NAMES = makeSymbolicNames();
@@ -1285,7 +1285,7 @@ public class testParser extends Parser {
 	}
 
 	public static final String _serializedATN =
-		"\3\u608b\ua72a\u8133\ub9ed\u417c\u3be7\u7786\u5964\39\u00d5\4\2\t\2\4"+
+		"\3\u608b\ua72a\u8133\ub9ed\u417c\u3be7\u7786\u5964\3:\u00d5\4\2\t\2\4"+
 		"\3\t\3\4\4\t\4\4\5\t\5\4\6\t\6\4\7\t\7\4\b\t\b\3\2\3\2\3\2\6\2\24\n\2"+
 		"\r\2\16\2\25\3\3\3\3\3\3\3\3\5\3\34\n\3\3\3\3\3\7\3 \n\3\f\3\16\3#\13"+
 		"\3\3\3\3\3\3\4\3\4\3\4\3\4\3\4\3\4\3\4\3\4\3\4\3\4\7\4\61\n\4\f\4\16\4"+

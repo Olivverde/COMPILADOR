@@ -59,7 +59,8 @@ DIGIT           : [0-9];
 STRING_LIT      : '"' ( '\\' [btnfr"'\\] | ~[\r\n\\"] )* '"'; // obtained from documentation
 BOOL_LIT        : TRUE | FALSE;
 COMMENT         : '--' .*? '\n' -> skip; // skip comment line starting with --
-COMMENT_2   : '..' .*? '..' -> skip; // skip comment between ..
+COMMENT_2   : '(*' .*? '*)' -> skip; // toggle comment (*...*)
+COMMENT_3   : '..' .*? '..' -> skip; // skip comment between ..
 NEWLINE		    : ('\r'? '\n' | '\r')+ -> skip; // skip new line
 WS	    : [ \t\r\n\f\b]+ -> skip; // skip all kind of whitespaces
 

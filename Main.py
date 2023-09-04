@@ -178,7 +178,45 @@ def getError(token):
     return token != testLexer.ERR_TOKEN
 
 
+"""
+        _Author_
+        Laura
+        
+        _summary_
+        This class is a custom error listener used for capturing and handling syntax errors during parsing.
+        It extends the base ErrorListener class and overrides the syntaxError method to customize error handling.
 
+        _Attributes_
+            hasErrors: A boolean flag that indicates whether syntax errors have been encountered.
+            syntaxErrors: A list that stores syntax error messages. 
+"""
+  
+class MyErrorListener(ErrorListener):
+    def __init__(self):
+        # Initialize error flags and a list to store syntax errors
+        self.hasErrors = False
+        self.syntaxErrors = []
+
+    def syntaxError(self, recognizer, offendingSymbol, line, column, msg, e):
+        # Set the error flag to True
+        self.hasErrors = True
+        if "expecting" in msg:
+            # If the error message contains "expecting," format a detailed error message
+            errorMsg = f' -> At line {line}:{column}, found {str(offendingSymbol).split("=")[1].split(",")[0]}. Expected {msg.split("expecting")[1]}'
+        else:
+            # If no specific expectation is mentioned, use the provided error message
+            errorMsg = msg
+        # Append the error message to the list of syntax errors
+        self.syntaxErrors.append(errorMsg)
+
+    def hasError(self):
+        # Check if any syntax errors occurred
+        return self.hasErrors
+
+    def getErrors(self):
+        # Retrieve the list of syntax errors
+        return self.syntaxErrors
+    
 """
 _Author_
 Oliver

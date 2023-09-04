@@ -53,7 +53,7 @@ class SymbolTable():
 
     def toTable(self):
         # Display the symbol table in a formatted table.
-        self.to_pretty.field_names = ["Type", "ID", "Size", "Offset", "Is Parameter"]
+        self.to_pretty.field_names = ["Type", "ID", "Size", "Byte Offset Location", "Param? (T/F)"]
         for symbol in self.symbol_table:
             self.to_pretty.add_row(list(symbol.values()))
         print(self.to_pretty)

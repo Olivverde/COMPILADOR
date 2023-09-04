@@ -579,6 +579,7 @@ class outputHandler(testListener):
         self.nodes_and_types[ctx.getText()] = self.VOID
         
     def enterClass_attribute(self, ctx: testParser.Class_attributeContext):
+        
         # Get the type and identifier of the attribute.
         type = ctx.var_type().getText()
         id = ctx.var_id().getText()
@@ -603,3 +604,5 @@ class outputHandler(testListener):
             column = ctx.start.column
             self.my_errors.add_error(self.my_errors.redef, line, column)
             self.nodes_and_types[ctx.getText()] = self.ERROR
+            
+    

@@ -641,3 +641,557 @@ class outputHandler(testListener):
             column = ctx.start.column
             self.my_errors.add_error(self.my_errors.redef, line, column)
             self.nodes_and_types[ctx.getText()] = self.ERROR
+    
+    def exitClass_attribute(self, ctx: testParser.Class_attributeContext):
+        self.nodes_and_types[ctx.getText()] = self.VOID
+        
+        if "<-" in ctx.getText():
+            # If there is an assignment, check if the assigned type matches the declared type.
+            type1 = ctx.var_type().getText()
+            type2 = self.nodes_and_types[ctx.expr().getText()]
+
+            if type1 == type2:
+                self.nodes_and_types[ctx.var_id().getText()] = type2
+            else:
+                line = ctx.start.line
+                column = ctx.start.column
+                self.my_errors.add_error(self.my_errors.diff_asign, line, column)
+                self.nodes_and_types[ctx.getText()] = self.ERROR
+                self.nodes_and_types[ctx.var_id().getText()] = self.ERROR
+        else:
+            # If no assignment, set the attribute's type to the declared type.
+            self.nodes_and_types[ctx.var_id().getText()] = ctx.var_type().getText()
+      
+    def exitNew_expr(self, ctx: testParser.New_exprContext):
+        # Get the type being instantiated with "new".
+        type = ctx.var_type().getText()
+        
+        # Check if the type is defined in the type table.
+        is_type = self.type_table.search(type)
+        if is_type == None:
+            line = ctx.start.line
+            column = ctx.start.column
+            self.my_errors.add_error(self.my_errors.no_type, line, column)
+            self.nodes_and_types[ctx.getText()] = self.ERROR
+            return
+
+        # Set the type of the "new" expression to the instantiated type.
+        self.nodes_and_types[ctx.getText()] = type
+
+    def exitAdd_expr(self, ctx: testParser.Add_exprContext):
+        # Check if there is an error in any of the child nodes.
+        error = self.BelowNodesHasError(ctx)
+        if error:
+            self.nodes_and_types[ctx.getText()] = self.ERROR
+            return
+        
+        # Get the types of the operands.
+        type1 = self.nodes_and_types[ctx.getChild(0).getText()]
+        type2 = self.nodes_and_types[ctx.getChild(2).getText()]
+        
+        expec_type = ""
+
+        # Check if the operation is valid (addition of integers or concatenation of strings).
+        if (type1 == self.INT and type2 == self.INT) or (type1 == self.STRING and type2 == self.STRING):
+            if type1 == self.INT:
+                expec_type = self.INT
+            else:
+                expec_type = self.STRING
+            self.nodes_and_types[ctx.getText()] = expec_type
+        else:
+            line = ctx.start.line
+            column = ctx.start.column
+            self.my_errors.add_error(self.my_errors.arit_no_int, line, column)
+            self.nodes_and_types[ctx.getText()] = self.ERROR
+
+    # The exitSub_expr and exitMul_expr methods have similar functionality to exitAdd_expr,
+    # so the comments for them will be omitted to avoid redundancy.
+    def exitSub_expr(self, ctx: testParser.Add_exprContext):
+        error = self.BelowNodesHasError(ctx)
+        if error:
+            self.nodes_and_types[ctx.getText()] = self.ERROR
+            return
+        
+        type1 = self.nodes_and_types[ctx.getChild(0).getText()]
+        type2 = self.nodes_and_types[ctx.getChild(2).getText()]
+
+        if type1 == self.INT and type2 == self.INT:
+            self.nodes_and_types[ctx.getText()] = self.INT
+        else:
+            line = ctx.start.line
+            column = ctx.start.column
+            self.my_errors.add_error(self.my_errors.arit_no_int, line, column)
+            self.nodes_and_types[ctx.getText()] = self.ERROR
+
+    def exitMul_expr(self, ctx: testParser.Add_exprContext):
+        error = self.BelowNodesHasError(ctx)
+        if error:
+            self.nodes_and_types[ctx.getText()] = self.ERROR
+            return
+        
+        type1 = self.nodes_and_types[ctx.getChild(0).getText()]
+        type2 = self.nodes_and_types[ctx.getChild(2).getText()]
+
+        if type1 == self.INT and type2 == self.INT:
+            self.nodes_and_types[ctx.getText()] = self.INT
+        else:
+            line = ctx.start.line
+            column = ctx.start.column
+            self.my_errors.add_error(self.my_errors.arit_no_int, line, column)
+            self.nodes_and_types[ctx.getText()] = self.ERROR
+
+    def exitDiv_expr(self, ctx: testParser.Add_exprContext):
+        # Check if there is an error in any of the child nodes.
+        error = self.BelowNodesHasError(ctx)
+        if error:
+            self.nodes_and_types[ctx.getText()] = self.ERROR
+            return
+        
+        # Get the types of the operands.
+        type1 = self.nodes_and_types[ctx.getChild(0).getText()]
+        type2 = self.nodes_and_types[ctx.getChild(2).getText()]
+
+        # Check if the operation is valid (division of integers).
+        if type1 == self.INT and type2 == self.INT:
+            self.nodes_and_types[ctx.getText()] = self.INT
+        else:
+            line = ctx.start.line
+            column = ctx.start.column
+            self.my_errors.add_error(self.my_errors.arit_no_int, line, column)
+            self.nodes_and_types[ctx.getText()] = self.ERROR
+
+    def exitLess_expr(self, ctx: testParser.Less_exprContext):
+        # Check if there is an error in any of the child nodes.
+        error = self.BelowNodesHasError(ctx)
+        if error:
+            self.nodes_and_types[ctx.getText()] = self.ERROR
+            return
+
+        # Get the types of the operands.
+        type1 = self.nodes_and_types[ctx.getChild(0).getText()]
+        type2 = self.nodes_and_types[ctx.getChild(2).getText()]
+
+        # Check if the types of operands are the same (comparison between compatible types).
+        if type1 == type2:
+            self.nodes_and_types[ctx.getText()] = self.BOOL
+        else:
+            line = ctx.start.line
+            column = ctx.start.column
+            self.my_errors.add_error(self.my_errors.cond_no_bool, line, column)
+            self.nodes_and_types[ctx.getText()] = self.ERROR
+
+    # The exitEq_expr and exitLessEq_expr methods have similar functionality to exitLess_expr,
+    # so the comments for them will be omitted to avoid redundancy.
+    def exitEq_expr(self, ctx: testParser.Less_exprContext):
+        error = self.BelowNodesHasError(ctx)
+        if error:
+            self.nodes_and_types[ctx.getText()] = self.ERROR
+            return
+
+        type1 = self.nodes_and_types[ctx.getChild(0).getText()]
+        type2 = self.nodes_and_types[ctx.getChild(2).getText()]
+
+        if type1 == type2:
+            self.nodes_and_types[ctx.getText()] = self.BOOL
+        else:
+            line = ctx.start.line
+            column = ctx.start.column
+            self.my_errors.add_error(self.my_errors.cond_no_bool, line, column)
+            self.nodes_and_types[ctx.getText()] = self.ERROR
+
+    # The exitNot_expr and exitNeg_expr methods have similar functionality to exitLess_expr,
+    # so the comments for them will be omitted to avoid redundancy.
+    def exitLessEq_expr(self, ctx: testParser.Less_exprContext):
+        error = self.BelowNodesHasError(ctx)
+        if error:
+            self.nodes_and_types[ctx.getText()] = self.ERROR
+            return
+
+        type1 = self.nodes_and_types[ctx.getChild(0).getText()]
+        type2 = self.nodes_and_types[ctx.getChild(2).getText()]
+
+        if type1 == type2:
+            self.nodes_and_types[ctx.getText()] = self.BOOL
+        else:
+            line = ctx.start.line
+            column = ctx.start.column
+            self.my_errors.add_error(self.my_errors.cond_no_bool, line, column)
+            self.nodes_and_types[ctx.getText()] = self.ERROR
+
+    def exitNot_expr(self, ctx: testParser.Not_exprContext):
+        # Check if there is an error in any of the child nodes.
+        error = self.BelowNodesHasError(ctx)
+        if error:
+            self.nodes_and_types[ctx.getText()] = self.ERROR
+            return
+        
+        # Get the type of the expression being negated.
+        typeSingle = self.nodes_and_types[ctx.getChild(1).getText()]
+        
+        # Check if the negation is valid (applied to a boolean expression).
+        if typeSingle == self.BOOL:
+            self.nodes_and_types[ctx.getText()] = self.BOOL
+        else:
+            line = ctx.start.line
+            column = ctx.start.column
+            self.my_errors.add_error(self.my_errors.not_bool, line, column)
+            self.nodes_and_types[ctx.getText()] = self.ERROR
+
+    def exitNeg_expr(self, ctx: testParser.Neg_exprContext):
+    # Check if there is an error in any of the child nodes.
+        error = self.BelowNodesHasError(ctx)
+        if error:
+            self.nodes_and_types[ctx.getText()] = self.ERROR
+            return
+        
+        # Get the type of the expression being negated.
+        typeSingle = self.nodes_and_types[ctx.getChild(1).getText()]
+        
+        # Check if the negation is valid (applied to an integer expression).
+        if typeSingle == self.INT:
+            self.nodes_and_types[ctx.getText()] = self.INT
+        else:
+            line = ctx.start.line
+            column = ctx.start.column
+            self.my_errors.add_error(self.my_errors.not_int, line, column)
+            self.nodes_and_types[ctx.getText()] = self.ERROR
+
+    def exitPar_expr(self, ctx: testParser.Par_exprContext):
+        # Check if there is an error in any of the child nodes.
+        error = self.BelowNodesHasError(ctx)
+        if error:
+            self.nodes_and_types[ctx.getText()] = self.ERROR
+            return
+        
+        # Set the type of the parenthesis expression to the type of its enclosed expression.
+        self.nodes_and_types[ctx.getText()] = self.nodes_and_types[ctx.getChild(1).getText()]
+
+    def exitVoid_expr(self, ctx: testParser.Void_exprContext):
+        # Check if there is an error in any of the child nodes.
+        error = self.BelowNodesHasError(ctx)
+        if error:
+            self.nodes_and_types[ctx.getText()] = self.ERROR
+            return
+        
+        # A Void expression is considered as an error, as Void cannot be used as an expression.
+        self.nodes_and_types[ctx.getText()] = self.ERROR
+
+    def exitAssign_expr(self, ctx: testParser.Assign_exprContext):
+        # Check if there is an error in any of the child nodes.
+        error = self.BelowNodesHasError(ctx)
+        if error:
+            self.nodes_and_types[ctx.getText()] = self.ERROR
+            return
+
+        # Get the types of the assignment.
+        type1 = self.nodes_and_types[ctx.var_id().getText()]
+        type2 = self.nodes_and_types[ctx.expr().getText()]
+
+        # Check if the assignment is valid (types match).
+        if type1 == type2:
+            self.nodes_and_types[ctx.getText()] = self.VOID
+        else:
+            line = ctx.start.line
+            column = ctx.start.column
+            self.my_errors.add_error(self.my_errors.diff_asign, line, column)
+            self.nodes_and_types[ctx.getText()] = self.ERROR
+
+    def exitConditional_expr(self, ctx: testParser.Conditional_exprContext):
+        # Check if there is an error in any of the child nodes.
+        error = self.BelowNodesHasError(ctx)
+        if error:
+            self.nodes_and_types[ctx.getText()] = self.ERROR
+            return
+
+        # Get the type of the conditional expression.
+        if_type = self.nodes_and_types[ctx.expr()[0].getText()]
+
+        # Check if the conditional expression is of type BOOL.
+        if if_type != self.BOOL:
+            self.nodes_and_types[ctx.getText()] = self.ERROR
+            line = ctx.expr()[0].start.line
+            col = ctx.expr()[0].start.column
+            self.my
+
+
+        # Exit function for a loop expression
+    
+    def exitLoop_expr(self, ctx: testParser.Loop_exprContext):
+        # Check if there were any errors in child nodes
+        error = self.BelowNodesHasError(ctx)
+        
+        # If there were errors, mark the current expression as an error and return
+        if error:
+            self.nodes_and_types[ctx.getText()] = self.ERROR
+            return
+
+        # Get the type of the loop condition expression
+        while_type = self.nodes_and_types[ctx.expr()[0].getText()]
+
+        # If the loop condition is not of type BOOL, mark the current expression as an error
+        if while_type != self.BOOL:
+            self.nodes_and_types[ctx.getText()] = self.ERROR
+            line = ctx.expr()[0].start.line
+            col = ctx.expr()[0].start.column
+            self.my_errors.add_error(self.my_errors.while_no_bool, line, col)
+        else:
+            # If the loop condition is of type BOOL, mark the current expression as OBJECT
+            self.nodes_and_types[ctx.getText()] = self.OBJECT
+
+    # Exit function for a branch expression
+    def exitBr_expr(self, ctx: testParser.Br_exprContext):
+        # Check if there were any errors in child nodes
+        error = self.BelowNodesHasError(ctx)
+        
+        # If there were errors, mark the current expression as an error and return
+        if error:
+            self.nodes_and_types[ctx.getText()] = self.ERROR
+            return
+
+        # Initialize a list to store the types of child expressions
+        hijos_tipo = []
+
+        # Iterate through the children of the branch expression
+        for i in ctx.children:
+            if not isinstance(i, TerminalNode):
+                if i.getText() == 'self':
+                    # If the child is 'self', append the type of 'self' with its parent class
+                    hijos_tipo.append(self.nodes_and_types[i.getText() + self.method_table.search(self.current_scope.scope_name)['parent']])
+                else:
+                    # Otherwise, append the type of the child expression
+                    hijos_tipo.append(self.nodes_and_types[i.getText()])
+
+        # Set the type of the branch expression to the type of the last child expression
+        self.nodes_and_types[ctx.getText()] = hijos_tipo[-1]
+
+    # Exit function for a method call expression
+    def exitmethod_call(self, ctx: testParser.method_callContext):
+        # Get the name of the method being called
+        methodsName = ctx.var_id().getText()
+        
+        # Initialize a list to store the method call parameters
+        parameters = []
+
+        # Iterate through the children of the method call expression
+        for ch in ctx.children:
+            if isinstance(ch, testParser.ExprContext):
+                # If the child is an expression, append it as a parameter
+                parameters.append(ch)
+
+        # Search for details about the method in the method table
+        method_detail = self.method_table.search(methodsName)
+        
+        # If the method is not found, mark the current expression as an error
+        if method_detail == None:
+            self.nodes_and_types[ctx.getText()] = self.ERROR
+            line = ctx.var_id().start.line
+            col = ctx.var_id().start.column
+            self.my_errors.add_error(self.my_errors.no_method, line, col)
+            return
+                    
+        # Get the parent class of the current method's scope
+        method_parent = self.method_table.search(self.current_scope.scope_name)['type']
+        
+        # Check if the method being called is a valid method of the parent class
+        if methodsName not in self.class_table.search(method_parent)['methods']:
+            # If not valid, mark the current expression as an error
+            self.nodes_and_types[ctx.getText()] = self.ERROR
+            line = ctx.var_id().start.line
+            col = ctx.var_id().start.column
+            self.my_errors.add_error(self.my_errors.no_method, line, col)
+            return
+        
+        # Check if the number of parameters in the method call matches the method's parameter count
+        if len(parameters) != len(method_detail['param']):
+            self.nodes_and_types[ctx.getText()] = self.ERROR
+            line = ctx.var_id().start.line
+            col = ctx.var_id().start.column
+            self.my_errors.add_error(self.my_errors.dif_no_par, line, col)
+            return
+
+        # If there are no parameters, set the type of the method call to the return type of the method
+        if len(parameters) == 0:
+            self.nodes_and_types[ctx.getText()] = method_detail["type"]
+
+        # Check the types of parameters and ensure they match the method's parameter types
+        some_child_has_error = False
+        for i in range(len(parameters)):
+            this_par_type = self.nodes_and_types[parameters[i].getText()]
+            if this_par_type == self.ERROR:
+                # If a parameter has an error, mark the current expression as an error
+                self.nodes_and_types[ctx.getText()] = self.ERROR
+                return
+            
+            method_par_type = method_detail['param'][i]['type']
+
+            if this_par_type != method_par_type:
+                # If a parameter type doesn't match, mark the current expression as an error
+                some_child_has_error = True
+                line = parameters[i].start.line
+                col = parameters[i].start.column
+                self.my_errors.add_error(self.my_errors.dif_type_par, line, col)
+
+        # If any parameter type didn't match, mark the current expression as an error
+        if some_child_has_error:
+            self.nodes_and_types[ctx.getText()] = self.ERROR
+        else:
+            # Set the type of the method call to the return type of the method
+            self.nodes_and_types[ctx.getText()] = method_detail["type"]
+
+
+        # Exit function for an expression expression
+    
+    def exitExpr_expr(self, ctx: testParser.Expr_exprContext):
+        # Get the type of the child expression
+        childType = self.nodes_and_types[ctx.expr()[0].getText()]
+
+        # Get the variable identifier from the context
+        var_id = ctx.var_id().getText()
+        
+        # Initialize child_scope with the current scope
+        child_scope = self.current_scope
+
+        # Iterate through the scope_register to find the correct child_scope
+        for i in self.scope_register:
+            if i.scope_name == childType:
+                child_scope = i
+
+        # Search for the class details of the child expression's type
+        child_class = self.class_table.search(childType) 
+
+        # Check if the child class is not found or is an error
+        if child_class == None or child_class == self.ERROR:
+            # Mark the current expression as an error and report the issue
+            self.nodes_and_types[ctx.getText()] = self.ERROR
+            line = ctx.var_id().start.line
+            col = ctx.var_id().start.column
+            self.my_errors.add_error(self.my_errors.no_def, line, col)
+            return
+        
+        # Check if the variable identifier exists in the child's scope
+        if child_scope.search(var_id) != None:
+            # Set the type of the current expression to the type of the variable
+            self.nodes_and_types[ctx.getText()] = self.nodes_and_types[var_id]
+        elif var_id in child_class['methods']:
+            # If the variable is a method, it might be a method call
+            methodsName = var_id
+            parameters = []
+
+            # Collect method call parameters from the context
+            for ch in ctx.children:
+                if isinstance(ch, testParser.ExprContext):
+                    parameters.append(ch)
+            parameters.pop(0)  # Remove the first parameter which is the object itself
+
+            # Search for details about the method in the method table
+            method_detail = self.method_table.search(methodsName)
+            
+            # If the method is not found, mark the current expression as an error
+            if method_detail == None:
+                self.nodes_and_types[ctx.getText()] = self.ERROR
+                line = ctx.var_id().start.line
+                col = ctx.var_id().start.column
+                self.my_errors.add_error(self.my_errors.no_method, line, col)
+                return
+                    
+            # Get the parent class of the child expression's type
+            method_parent = childType
+
+            # Check if the method being called is a valid method of the parent class
+            if methodsName not in self.class_table.search(method_parent)['methods']:
+                # Mark the current expression as an error
+                self.nodes_and_types[ctx.getText()] = self.ERROR
+                line = ctx.var_id().start.line
+                col = ctx.var_id().start.column
+                self.my_errors.add_error(self.my_errors.no_method, line, col)
+                return
+            
+            # Check if the number of parameters in the method call matches the method's parameter count
+            if len(parameters) != len(method_detail['param']):
+                self.nodes_and_types[ctx.getText()] = self.ERROR
+                line = ctx.var_id().start.line
+                col = ctx.var_id().start.column
+                self.my_errors.add_error(self.my_errors.dif_no_par, line, col)
+                return
+
+            # If there are no parameters, set the type of the method call to the return type of the method
+            if len(parameters) == 0:
+                self.nodes_and_types[ctx.getText()] = method_detail["type"]
+
+            # Check the types of parameters and ensure they match the method's parameter types
+            some_child_has_error = False
+            for i in range(len(parameters)):
+                this_par_type = self.nodes_and_types[parameters[i].getText()]
+                if this_par_type == self.ERROR:
+                    # If a parameter has an error, mark the current expression as an error
+                    self.nodes_and_types[ctx.getText()] = self.ERROR
+                    return
+                
+                method_par_type = method_detail['param'][i]['type']
+
+                if this_par_type != method_par_type:
+                    some_child_has_error = True
+                    line = parameters[i].start.line
+                    col = parameters[i].start.column
+                    self.my_errors.add_error(self.my_errors.dif_type_par, line, col)
+
+            # If any parameter type didn't match, mark the current expression as an error
+            if some_child_has_error:
+                self.nodes_and_types[ctx.getText()] = self.ERROR
+            else:
+                # Set the type of the method call to the return type of the method
+                self.nodes_and_types[ctx.getText()] = method_detail["type"]
+        else:
+            # If the variable is not found in child's scope, mark the current expression as an error
+            self.nodes_and_types[ctx.getText()] = self.ERROR
+            line = ctx.var_id().start.line
+            col = ctx.var_id().start.column
+            self.my_errors.add_error(self.my_errors.no_method, line, col)
+
+        # Enter function for a let expression
+    
+    def enterLet_expr(self, ctx: testParser.Add_exprContext):
+        # Get the total number of child nodes
+        hijos = ctx.getChildCount()
+        
+        # Iterate through the child nodes
+        for i in range(hijos):
+            # Check if the child node is of type 'Var_typeContext' (indicating a variable declaration)
+            if isinstance(ctx.getChild(i), testParser.Var_typeContext):
+                # Get the variable type and identifier from the context
+                type = ctx.getChild(i).getText()
+                id = ctx.getChild(i-2).getText()
+
+                # Check if the variable is not already defined in the current scope
+                if self.current_scope.search(id) == None:
+                    # Search for the type information in the type table
+                    is_type = self.type_table.search(type)
+                    
+                    # If the type is not found, report an error
+                    if is_type == None:
+                        line = ctx.start.line
+                        column = ctx.start.column
+                        self.my_errors.add_error(self.my_errors.no_type, line, column)
+                        self.nodes_and_types[ctx.getText()] = self.ERROR
+                        return
+                    
+                    # Get the size and offset information for the variable
+                    size = is_type["size"]
+                    offset = self.current_scope.this_off
+                    
+                    # Add the variable to the current scope
+                    self.current_scope.add(type, id, size, offset, False)
+                    
+                    # Set the type of the variable in the nodes_and_types dictionary
+                    self.nodes_and_types[id] = type
+                else:
+                    # If the variable is already defined in the current scope, report a redefinition error
+                    line = ctx.start.line
+                    column = ctx.start.column
+                    self.my_errors.add_error(self.my_errors.redef, line, column)
+                    self.nodes_and_types[ctx.getText()] = self.ERROR
+
+    # Exit function for a let expression
+    def exitLet_expr(self, ctx: testParser.Let_exprContext):
+        # Set the type of the current expression to the type of the last expression in the 'let' block
+        self.nodes_and_types[ctx.getText()] = self.nodes_and_types[ctx.expr()[-1].getText()]

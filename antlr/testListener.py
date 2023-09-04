@@ -17,12 +17,12 @@ class testListener(ParseTreeListener):
         pass
 
 
-    # Enter a parse tree produced by testParser#class_prod.
-    def enterClass_prod(self, ctx:testParser.Class_prodContext):
+    # Enter a parse tree produced by testParser#class.
+    def enterClass(self, ctx:testParser.ClassContext):
         pass
 
-    # Exit a parse tree produced by testParser#class_prod.
-    def exitClass_prod(self, ctx:testParser.Class_prodContext):
+    # Exit a parse tree produced by testParser#class.
+    def exitClass(self, ctx:testParser.ClassContext):
         pass
 
 

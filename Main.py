@@ -1,96 +1,27 @@
-
 # LIBS
 
-import re
 from antlr4 import *
-from cmath import exp
-from colorama import *
-from re import S, search
 from SymbolsTable import *
-from operator import truediv
 import antlr4.Utils as Utils
-from itertools import groupby
-from tkinter.messagebox import YES
 from antlr4.tree.Trees import Trees
-from multiprocessing import context
-from dist.testLexer import testLexer
-from dist.testParser import testParser
-from dist.testListener import testListener
+from antlr.testLexer import testLexer
+from antlr.YAPLParser import YAPLParser
+from antlr.YAPLListener import YAPLListener
 from antlr4.tree.Trees import TerminalNode
-from unittest.mock import NonCallableMagicMock
 from antlr4.error.ErrorListener import ErrorListener
 
 
-class errorListener(ErrorListener):
-    def __init__(self):
-        super().__init__()  # Llamada al constructor de la clase base
-        self.hasError = False
-        self.listErrors = []
-
-    def syntaxError(self, recognizer, offendingSymbol, line, column, msg, e):
-        self.hasError = True
-        errorMsg = f'- Error encontrado en la línea {line}. ' \
-                f'Motivo de fallo: {msg}'
-        self.listErrors.append(errorMsg)
-
-    def getHasError(self):
-        return self.hasError
-
-class Lex_Ser():
-    
-    def main(self):
-        pass
-        """  with open("./Test/hello_world.cl", 'r') as file:
-            input_stream = InputStream(file.read())
-            myError = errorListener()  # Cambio a minúsculas para la instancia
-            lexer = testLexer(input_stream)
-            token_stream = CommonTokenStream(lexer)
-            parser = testParser(token_stream)
-            parser.addErrorListener(myError)
-            tree = parser.program()   
-            lisp_tree_str = tree.toStringTree(recog=parser)
-            
-            if not myError.getHasError():
-                print("No hay errores.")
-        """
-           
-class TransformDot(ParseTreeVisitor):
-    def __init__(self):
-        super().__init__()
-        self.dot = 'digraph AST {\n'
-        self.id = 0
-
-    def visitChildren(self, node):
-        node_id = self.id
-        for i in range(node.getChildCount()):
-            child = node.getChild(i)
-            if not isinstance(child, TerminalNodeImpl):
-                self.id += 1
-                child_id = self.id
-                self.dot += '  node{} [label="{}"];\n'.format(child_id, child.getText())
-                self.dot += '  node{} -> node{};\n'.format(node_id, child_id)
-                self.visit(child)
-
-    def terminalNode(self, node):
-        self.dot += '  node{} [label="{}"];\n'.format(self.id, node.getText())
-        if self.id != 0:
-            self.dot += '  node{} -> node{};\n'.format(self.id - 1, self.id)
-
-    def getDot(self):
-        return self.dot + '}\n'
-
-
 """
-_Author_
-Oliver
+        _Author_
+        Oliver
+        
+        _summary_
+        This class provides utility methods for working with parse trees, specifically for generating a pretty-printed representation of a parse tree
 
-_summary_
-This class provides utility methods for working with parse trees, specifically for generating a pretty-printed representation of a parse tree
-
-_Attributes_
-    eol: A string representing the end-of-line character(s).
-    idents: A string representing the indentation used for each level of the parse tree.
-    level: An integer representing the current indentation level. 
+        _Attributes_
+            eol: A string representing the end-of-line character(s).
+            idents: A string representing the indentation used for each level of the parse tree.
+            level: An integer representing the current indentation level. 
 """
 
 class TreeUtils:
@@ -133,7 +64,46 @@ class TreeUtils:
                 sb += self.idents
 
         return sb
+       
+       
+"""
+        _Author_
+        Laura
+        
+        _summary_
+        This class is a custom error listener used for capturing and handling syntax errors during parsing.
+        It extends the base ErrorListener class and overrides the syntaxError method to customize error handling.
 
+        _Attributes_
+            hasErrors: A boolean flag that indicates whether syntax errors have been encountered.
+            syntaxErrors: A list that stores syntax error messages. 
+"""
+  
+class MyErrorListener(ErrorListener):
+    def __init__(self):
+        # Initialize error flags and a list to store syntax errors
+        self.hasErrors = False
+        self.syntaxErrors = []
+
+    def syntaxError(self, recognizer, offendingSymbol, line, column, msg, e):
+        # Set the error flag to True
+        self.hasErrors = True
+        if "expecting" in msg:
+            # If the error message contains "expecting," format a detailed error message
+            errorMsg = f' -> At line {line}:{column}, found {str(offendingSymbol).split("=")[1].split(",")[0]}. Expected {msg.split("expecting")[1]}'
+        else:
+            # If no specific expectation is mentioned, use the provided error message
+            errorMsg = msg
+        # Append the error message to the list of syntax errors
+        self.syntaxErrors.append(errorMsg)
+
+    def hasError(self):
+        # Check if any syntax errors occurred
+        return self.hasErrors
+
+    def getErrors(self):
+        # Retrieve the list of syntax errors
+        return self.syntaxErrors
 
 """
 _Author_
@@ -176,55 +146,10 @@ _Attributes_
 def getError(token):
     # Check if the given token is not equal to the error token (testLexer.ERR_TOKEN)
     return token != testLexer.ERR_TOKEN
-
-
-"""
-        _Author_
-        Laura
-        
-        _summary_
-        This class is a custom error listener used for capturing and handling syntax errors during parsing.
-        It extends the base ErrorListener class and overrides the syntaxError method to customize error handling.
-
-        _Attributes_
-            hasErrors: A boolean flag that indicates whether syntax errors have been encountered.
-            syntaxErrors: A list that stores syntax error messages. 
-"""
-  
-class MyErrorListener(ErrorListener):
-    def __init__(self):
-        # Initialize error flags and a list to store syntax errors
-        self.hasErrors = False
-        self.syntaxErrors = []
-
-    def syntaxError(self, recognizer, offendingSymbol, line, column, msg, e):
-        # Set the error flag to True
-        self.hasErrors = True
-        if "expecting" in msg:
-            # If the error message contains "expecting," format a detailed error message
-            errorMsg = f' -> At line {line}:{column}, found {str(offendingSymbol).split("=")[1].split(",")[0]}. Expected {msg.split("expecting")[1]}'
-        else:
-            # If no specific expectation is mentioned, use the provided error message
-            errorMsg = msg
-        # Append the error message to the list of syntax errors
-        self.syntaxErrors.append(errorMsg)
-
-    def hasError(self):
-        # Check if any syntax errors occurred
-        return self.hasErrors
-
-    def getErrors(self):
-        # Retrieve the list of syntax errors
-        return self.syntaxErrors
-    
 """
 _Author_
 Oliver
-
-_summary_
-Represents a compiler that performs lexical, syntax, and semantic analysis on a source code file.
 """
-
 class Compiler:
     def __init__(self, file):
         # Initialize the compiler with the given file name
@@ -262,10 +187,10 @@ class Compiler:
         lexer.reset()
 
         stream = CommonTokenStream(lexer)
-        parser = testParser(stream)
+        parser = YAPLParser(stream)
 
         parser.removeErrorListeners()
-        listener = MyErrorListener() #################### PENDING
+        listener = MyErrorListener()
         parser.addErrorListener(listener)
         parser.buildParseTrees = True
         tree = parser.program()
@@ -285,7 +210,7 @@ class Compiler:
         
         # If no syntax errors, proceed with semantic analysis
         if len(self.listErr) <= 0:
-            self.printer = YaplPrinter() ########### PENDING
+            self.printer = outputHandler()
             walker = ParseTreeWalker()
             walker.walk(self.printer, tree)
             if len(self.printer.my_errors.get_errors()) > 0:
@@ -293,17 +218,9 @@ class Compiler:
                 for err in self.printer.my_errors.get_errors():
                     SemErr += err + "\n"
                 self.SemErr = SemErr
+                
 
-
-"""
-_Author_
-Oliver & Laura
-
-_summary_
-PRINTERS COMING SOON
-"""
-
-class outputHandler(testListener):
+class outputHandler(YAPLListener):
     def __init__(self):
         # Initialize class attributes and data structures.
         self.root = None
@@ -340,20 +257,20 @@ class outputHandler(testListener):
         self.class_table = ClassTable()
         self.par_table = ParameterTable()
         self.method_table = MethodTable()
-        self.my_errors = ErrorTypes() ##$$$$ PENDING
+        self.my_errors = ErrorTypes()
 
         self.nodes_and_types = {}
 
         super().__init__()
 
     # ... (other methods)
-    
+
     def scope_pop(self):
         # Pop the current scope from the scope stack and print its contents.
         print("SCOPE:", self.current_scope.scope_name)
         self.current_scope.toTable()
         self.current_scope = self.scopes.pop()
-        
+
     def scope_push(self, name):
         # Push a new scope onto the stack with the given name.
         self.scopes.append(self.current_scope)
@@ -372,13 +289,13 @@ class outputHandler(testListener):
             return None
         else:
             return this_var
-    
-    def enterProgram(self, ctx: testParser.ProgramContext):
+
+    def enterProgram(self, ctx: YAPLParser.ProgramContext):
         # Initialize the program scope and add the "self" variable.
         self.root = ctx
         self.current_scope = SymbolTable(ctx.getText())
         self.current_scope.add("SELF_TYPE", "self", self.type_table.search("SELF_TYPE")['size'], self.current_scope.this_off, False)
-    
+
     def BelowNodesHasError(self, ctx):
         # Check if any child nodes of the context have errors.
         for child in ctx.getChildren():
@@ -393,7 +310,7 @@ class outputHandler(testListener):
                 return True
         return False
     
-    def exitProgram(self, ctx: testParser.ProgramContext):
+    def exitProgram(self, ctx: YAPLParser.ProgramContext):
         # Perform checks and print symbol tables and types.
         main_class = self.class_table.search("Main")
         if main_class is not None:
@@ -418,11 +335,13 @@ class outputHandler(testListener):
         print("\n\n---------------Method Table---------------")
         self.method_table.toTable()
 
-        print("--------------All types found ----------------")
-        for i in self.nodes_and_types:
-            print("Structure: ", i, " Type: ", self.nodes_and_types[i])
         
-    def enterClass(self, ctx: testParser.ClassContext):
+        ############################################################################# TEMPORARY DEPRECATED
+        # print("--------------All types found ----------------")
+        # for i in self.nodes_and_types:
+        #     print("Structure: ", i, " Type: ", self.nodes_and_types[i])
+
+    def enterClass(self, ctx: YAPLParser.ClassContext):
     # Get the class name and initialize variables.
         this_class = ctx.var_type()[0].getText()
         inherits = ""
@@ -455,45 +374,45 @@ class outputHandler(testListener):
         # Push a new scope for the class.
         self.scope_push(this_class)
 
-    def exitClass(self, ctx: testParser.ClassContext):
-            # Get the class name.
-            this_class = ctx.var_type()[0].getText()
+    def exitClass(self, ctx: YAPLParser.ClassContext):
+        # Get the class name.
+        this_class = ctx.var_type()[0].getText()
 
-            # Calculate the size of the scope and update it in the type table.
-            size_scope = self.current_scope.getSize()
-            self.type_table.search(this_class)['size'] = size_scope
+        # Calculate the size of the scope and update it in the type table.
+        size_scope = self.current_scope.getSize()
+        self.type_table.search(this_class)['size'] = size_scope
 
-            # Set the type of the class context to VOID.
-            self.nodes_and_types[ctx.getText()] = self.VOID
+        # Set the type of the class context to VOID.
+        self.nodes_and_types[ctx.getText()] = self.VOID
 
-            # Register the current scope and pop it from the stack.
-            self.scope_register.append(self.current_scope)
-            self.scope_pop()
+        # Register the current scope and pop it from the stack.
+        self.scope_register.append(self.current_scope)
+        self.scope_pop()
 
-    def exitString_expr(self, ctx: testParser.String_exprContext):
+    def exitString_expr(self, ctx: YAPLParser.String_exprContext):
         # Set the type of the string expression context to STRING.
         self.nodes_and_types[ctx.getText()] = self.STRING
-        
-    def exitInt_expr(self, ctx: testParser.Int_exprContext):
+
+    def exitInt_expr(self, ctx: YAPLParser.Int_exprContext):
         # Set the type of the integer expression context to INT.
         self.nodes_and_types[ctx.getText()] = self.INT
 
-    def exitTrue_expr(self, ctx: testParser.True_exprContext):
+    def exitTrue_expr(self, ctx: YAPLParser.True_exprContext):
         # Set the type of the true expression context to BOOL.
         self.nodes_and_types[ctx.getText()] = self.BOOL
-        
-    def exitFalse_expr(self, ctx: testParser.False_exprContext):
+
+    def exitFalse_expr(self, ctx: YAPLParser.False_exprContext):
         # Set the type of the false expression context to BOOL.
         self.nodes_and_types[ctx.getText()] = self.BOOL
 
-    def enterVar_expr(self, ctx: testParser.Var_exprContext):
+    def enterVar_expr(self, ctx: YAPLParser.Var_exprContext):
         # Get the parent context and check if it has a known type.
         parent = ctx.parentCtx.getText()
         if parent in self.nodes_and_types.keys():
             # Set the type of the variable expression context to the type of its parent.
             self.nodes_and_types[ctx.getText()] = self.nodes_and_types[parent]
-
-    def exitVar_expr(self, ctx: testParser.Var_exprContext):
+        
+    def exitVar_expr(self, ctx: YAPLParser.Var_exprContext):
         # Get the parent context and check if it or the current context has a known type.
         parent = ctx.parentCtx.getText()
         if parent in self.nodes_and_types.keys() or ctx.getText() in self.nodes_and_types.keys():
@@ -519,63 +438,63 @@ class outputHandler(testListener):
                 self.method_table.search(self.current_scope.scope_name)['type'] = self.method_table.search(self.current_scope.scope_name)['parent']
             else:
                 self.nodes_and_types[ctx.getText()] = self.VOID
-                
-    def enterClass_method(self, ctx: testParser.Class_methodContext):
-            # Get the method's name.
-            methodsName = ctx.var_id()[0].getText()
-            parameters = []
 
-            # Check if the method is not redefined.
-            if self.method_table.search(methodsName) == None:
-                tipo = ctx.return_type().var_type().getText()
-                is_type = self.type_table.search(tipo)
+    def enterClass_method(self, ctx: YAPLParser.Class_methodContext):
+        # Get the method's name.
+        methodsName = ctx.var_id()[0].getText()
+        parameters = []
 
-                # Check if the return type is valid.
-                if is_type != None:
-                    hijos = ctx.getChildCount()
-                    for i in range(hijos):
-                        if isinstance(ctx.getChild(i), testParser.Var_typeContext):
-                            par_type = ctx.getChild(i).getText()
-                            is_type = self.type_table.search(par_type)
+        # Check if the method is not redefined.
+        if self.method_table.search(methodsName) == None:
+            _type = ctx.return_type().var_type().getText()
+            is_type = self.type_table.search(_type)
 
-                            # Check if the parameter type is valid.
-                            if is_type != None:
-                                par_id = ctx.getChild(i - 2).getText()
-                                if par_id in [i['id'] for i in parameters]:
-                                    line = ctx.getChild(i).start.line
-                                    col = ctx.getChild(i).start.column
-                                    self.my_errors.add_error(self.my_errors.redef, line, col)
-                                parameters.append({"type": par_type, "id": par_id})
-                                self.par_table.add(par_type, par_id)
-                            else:
-                                line = ctx.return_type().var_type().start.line
-                                column = ctx.return_type().var_type().start.column
-                                self.my_errors.add_error(self.my_errors.no_type, line, column)
+            # Check if the return type is valid.
+            if is_type != None:
+                child_s = ctx.getChildCount()
+                for i in range(child_s):
+                    if isinstance(ctx.getChild(i), YAPLParser.Var_typeContext):
+                        par_type = ctx.getChild(i).getText()
+                        is_type = self.type_table.search(par_type)
 
-                    parent = ctx.parentCtx
-                    parent_name = parent.var_type()[0].getText()
+                        # Check if the parameter type is valid.
+                        if is_type != None:
+                            par_id = ctx.getChild(i - 2).getText()
+                            if par_id in [i['id'] for i in parameters]:
+                                line = ctx.getChild(i).start.line
+                                col = ctx.getChild(i).start.column
+                                self.my_errors.add_error(self.my_errors.redef, line, col)
+                            parameters.append({"type": par_type, "id": par_id})
+                            self.par_table.add(par_type, par_id)
+                        else:
+                            line = ctx.return_type().var_type().start.line
+                            column = ctx.return_type().var_type().start.column
+                            self.my_errors.add_error(self.my_errors.no_type, line, column)
 
-                    # Add the method to the method table and the class's list of methods.
-                    self.method_table.add(tipo, methodsName, parameters, parent_name)
-                    self.class_table.search(parent_name)['methods'].append(methodsName)
-                else:
-                    line = ctx.return_type().var_type().start.line
-                    column = ctx.return_type().var_type().start.column
-                    self.my_errors.add_error(self.my_errors.no_type, line, column)
+                parent = ctx.parentCtx
+                parent_name = parent.var_type()[0].getText()
+
+                # Add the method to the method table and the class's list of methods.
+                self.method_table.add(_type, methodsName, parameters, parent_name)
+                self.class_table.search(parent_name)['methods'].append(methodsName)
             else:
-                line = ctx.var_id()[0].start.line
-                column = ctx.var_id()[0].start.column
-                self.my_errors.add_error(self.my_errors.redef, line, column)
+                line = ctx.return_type().var_type().start.line
+                column = ctx.return_type().var_type().start.column
+                self.my_errors.add_error(self.my_errors.no_type, line, column)
+        else:
+            line = ctx.var_id()[0].start.line
+            column = ctx.var_id()[0].start.column
+            self.my_errors.add_error(self.my_errors.redef, line, column)
 
-            # Push a new scope for the method and add the parameters to it.
-            self.scope_push(methodsName)
-            for par in parameters:
-                par_type = self.type_table.search(par['type'])
-                size = par_type['size']
-                off = self.current_scope.this_off
-                self.current_scope.add(par['type'], par['id'], size, off, True)
+        # Push a new scope for the method and add the parameters to it.
+        self.scope_push(methodsName)
+        for par in parameters:
+            par_type = self.type_table.search(par['type'])
+            size = par_type['size']
+            off = self.current_scope.this_off
+            self.current_scope.add(par['type'], par['id'], size, off, True)
 
-    def exitClass_method(self, ctx: testParser.Class_methodContext):
+    def exitClass_method(self, ctx: YAPLParser.Class_methodContext):
         # Get the method type from the method table.
         method_type = self.method_table.search(self.current_scope.scope_name)
 
@@ -615,9 +534,8 @@ class outputHandler(testListener):
             self.my_errors.add_error(self.my_errors.dif_type_ret, line, col)
         
         self.nodes_and_types[ctx.getText()] = self.VOID
-        
-    def enterClass_attribute(self, ctx: testParser.Class_attributeContext):
-        
+
+    def enterClass_attribute(self, ctx: YAPLParser.Class_attributeContext):
         # Get the type and identifier of the attribute.
         type = ctx.var_type().getText()
         id = ctx.var_id().getText()
@@ -642,8 +560,8 @@ class outputHandler(testListener):
             column = ctx.start.column
             self.my_errors.add_error(self.my_errors.redef, line, column)
             self.nodes_and_types[ctx.getText()] = self.ERROR
-    
-    def exitClass_attribute(self, ctx: testParser.Class_attributeContext):
+
+    def exitClass_attribute(self, ctx: YAPLParser.Class_attributeContext):
         self.nodes_and_types[ctx.getText()] = self.VOID
         
         if "<-" in ctx.getText():
@@ -663,7 +581,7 @@ class outputHandler(testListener):
             # If no assignment, set the attribute's type to the declared type.
             self.nodes_and_types[ctx.var_id().getText()] = ctx.var_type().getText()
       
-    def exitNew_expr(self, ctx: testParser.New_exprContext):
+    def exitNew_expr(self, ctx: YAPLParser.New_exprContext):
         # Get the type being instantiated with "new".
         type = ctx.var_type().getText()
         
@@ -679,7 +597,7 @@ class outputHandler(testListener):
         # Set the type of the "new" expression to the instantiated type.
         self.nodes_and_types[ctx.getText()] = type
 
-    def exitAdd_expr(self, ctx: testParser.Add_exprContext):
+    def exitAdd_expr(self, ctx: YAPLParser.Add_exprContext):
         # Check if there is an error in any of the child nodes.
         error = self.BelowNodesHasError(ctx)
         if error:
@@ -707,7 +625,7 @@ class outputHandler(testListener):
 
     # The exitSub_expr and exitMul_expr methods have similar functionality to exitAdd_expr,
     # so the comments for them will be omitted to avoid redundancy.
-    def exitSub_expr(self, ctx: testParser.Add_exprContext):
+    def exitSub_expr(self, ctx: YAPLParser.Add_exprContext):
         error = self.BelowNodesHasError(ctx)
         if error:
             self.nodes_and_types[ctx.getText()] = self.ERROR
@@ -724,7 +642,7 @@ class outputHandler(testListener):
             self.my_errors.add_error(self.my_errors.arit_no_int, line, column)
             self.nodes_and_types[ctx.getText()] = self.ERROR
 
-    def exitMul_expr(self, ctx: testParser.Add_exprContext):
+    def exitMul_expr(self, ctx: YAPLParser.Add_exprContext):
         error = self.BelowNodesHasError(ctx)
         if error:
             self.nodes_and_types[ctx.getText()] = self.ERROR
@@ -741,7 +659,7 @@ class outputHandler(testListener):
             self.my_errors.add_error(self.my_errors.arit_no_int, line, column)
             self.nodes_and_types[ctx.getText()] = self.ERROR
 
-    def exitDiv_expr(self, ctx: testParser.Add_exprContext):
+    def exitDiv_expr(self, ctx: YAPLParser.Add_exprContext):
         # Check if there is an error in any of the child nodes.
         error = self.BelowNodesHasError(ctx)
         if error:
@@ -761,7 +679,7 @@ class outputHandler(testListener):
             self.my_errors.add_error(self.my_errors.arit_no_int, line, column)
             self.nodes_and_types[ctx.getText()] = self.ERROR
 
-    def exitLess_expr(self, ctx: testParser.Less_exprContext):
+    def exitLess_expr(self, ctx: YAPLParser.Less_exprContext):
         # Check if there is an error in any of the child nodes.
         error = self.BelowNodesHasError(ctx)
         if error:
@@ -783,7 +701,7 @@ class outputHandler(testListener):
 
     # The exitEq_expr and exitLessEq_expr methods have similar functionality to exitLess_expr,
     # so the comments for them will be omitted to avoid redundancy.
-    def exitEq_expr(self, ctx: testParser.Less_exprContext):
+    def exitEq_expr(self, ctx: YAPLParser.Less_exprContext):
         error = self.BelowNodesHasError(ctx)
         if error:
             self.nodes_and_types[ctx.getText()] = self.ERROR
@@ -802,8 +720,8 @@ class outputHandler(testListener):
 
     # The exitNot_expr and exitNeg_expr methods have similar functionality to exitLess_expr,
     # so the comments for them will be omitted to avoid redundancy.
-    def exitLessEq_expr(self, ctx: testParser.Less_exprContext):
-        error = self.BelowNodesHasError(ctx)
+    def exitLessEq_expr(self, ctx: YAPLParser.Less_exprContext):
+        error = this.BelowNodesHasError(ctx)
         if error:
             self.nodes_and_types[ctx.getText()] = self.ERROR
             return
@@ -819,7 +737,7 @@ class outputHandler(testListener):
             self.my_errors.add_error(self.my_errors.cond_no_bool, line, column)
             self.nodes_and_types[ctx.getText()] = self.ERROR
 
-    def exitNot_expr(self, ctx: testParser.Not_exprContext):
+    def exitNot_expr(self, ctx: YAPLParser.Not_exprContext):
         # Check if there is an error in any of the child nodes.
         error = self.BelowNodesHasError(ctx)
         if error:
@@ -838,7 +756,7 @@ class outputHandler(testListener):
             self.my_errors.add_error(self.my_errors.not_bool, line, column)
             self.nodes_and_types[ctx.getText()] = self.ERROR
 
-    def exitNeg_expr(self, ctx: testParser.Neg_exprContext):
+    def exitNeg_expr(self, ctx: YAPLParser.Neg_exprContext):
     # Check if there is an error in any of the child nodes.
         error = self.BelowNodesHasError(ctx)
         if error:
@@ -857,7 +775,7 @@ class outputHandler(testListener):
             self.my_errors.add_error(self.my_errors.not_int, line, column)
             self.nodes_and_types[ctx.getText()] = self.ERROR
 
-    def exitPar_expr(self, ctx: testParser.Par_exprContext):
+    def exitPar_expr(self, ctx: YAPLParser.Par_exprContext):
         # Check if there is an error in any of the child nodes.
         error = self.BelowNodesHasError(ctx)
         if error:
@@ -867,7 +785,7 @@ class outputHandler(testListener):
         # Set the type of the parenthesis expression to the type of its enclosed expression.
         self.nodes_and_types[ctx.getText()] = self.nodes_and_types[ctx.getChild(1).getText()]
 
-    def exitVoid_expr(self, ctx: testParser.Void_exprContext):
+    def exitVoid_expr(self, ctx: YAPLParser.Void_exprContext):
         # Check if there is an error in any of the child nodes.
         error = self.BelowNodesHasError(ctx)
         if error:
@@ -877,7 +795,7 @@ class outputHandler(testListener):
         # A Void expression is considered as an error, as Void cannot be used as an expression.
         self.nodes_and_types[ctx.getText()] = self.ERROR
 
-    def exitAssign_expr(self, ctx: testParser.Assign_exprContext):
+    def exitAssign_expr(self, ctx: YAPLParser.Assign_exprContext):
         # Check if there is an error in any of the child nodes.
         error = self.BelowNodesHasError(ctx)
         if error:
@@ -897,7 +815,7 @@ class outputHandler(testListener):
             self.my_errors.add_error(self.my_errors.diff_asign, line, column)
             self.nodes_and_types[ctx.getText()] = self.ERROR
 
-    def exitConditional_expr(self, ctx: testParser.Conditional_exprContext):
+    def exitConditional_expr(self, ctx: YAPLParser.Conditional_exprContext):
         # Check if there is an error in any of the child nodes.
         error = self.BelowNodesHasError(ctx)
         if error:
@@ -917,7 +835,7 @@ class outputHandler(testListener):
 
         # Exit function for a loop expression
     
-    def exitLoop_expr(self, ctx: testParser.Loop_exprContext):
+    def exitLoop_expr(self, ctx: YAPLParser.Loop_exprContext):
         # Check if there were any errors in child nodes
         error = self.BelowNodesHasError(ctx)
         
@@ -940,7 +858,7 @@ class outputHandler(testListener):
             self.nodes_and_types[ctx.getText()] = self.OBJECT
 
     # Exit function for a branch expression
-    def exitBr_expr(self, ctx: testParser.Br_exprContext):
+    def exitBr_expr(self, ctx: YAPLParser.Br_exprContext):
         # Check if there were any errors in child nodes
         error = self.BelowNodesHasError(ctx)
         
@@ -950,23 +868,23 @@ class outputHandler(testListener):
             return
 
         # Initialize a list to store the types of child expressions
-        hijos_tipo = []
+        child_s__type = []
 
         # Iterate through the children of the branch expression
         for i in ctx.children:
             if not isinstance(i, TerminalNode):
                 if i.getText() == 'self':
                     # If the child is 'self', append the type of 'self' with its parent class
-                    hijos_tipo.append(self.nodes_and_types[i.getText() + self.method_table.search(self.current_scope.scope_name)['parent']])
+                    child_s__type.append(self.nodes_and_types[i.getText() + self.method_table.search(self.current_scope.scope_name)['parent']])
                 else:
                     # Otherwise, append the type of the child expression
-                    hijos_tipo.append(self.nodes_and_types[i.getText()])
+                    child_s__type.append(self.nodes_and_types[i.getText()])
 
         # Set the type of the branch expression to the type of the last child expression
-        self.nodes_and_types[ctx.getText()] = hijos_tipo[-1]
+        self.nodes_and_types[ctx.getText()] = child_s__type[-1]
 
     # Exit function for a method call expression
-    def exitmethod_call(self, ctx: testParser.method_callContext):
+    def exitmethod_call(self, ctx: YAPLParser.method_callContext):
         # Get the name of the method being called
         methodsName = ctx.var_id().getText()
         
@@ -975,7 +893,7 @@ class outputHandler(testListener):
 
         # Iterate through the children of the method call expression
         for ch in ctx.children:
-            if isinstance(ch, testParser.ExprContext):
+            if isinstance(ch, YAPLParser.ExprContext):
                 # If the child is an expression, append it as a parameter
                 parameters.append(ch)
 
@@ -1042,7 +960,7 @@ class outputHandler(testListener):
 
         # Exit function for an expression expression
     
-    def exitExpr_expr(self, ctx: testParser.Expr_exprContext):
+    def exitExpr_expr(self, ctx: YAPLParser.Expr_exprContext):
         # Get the type of the child expression
         childType = self.nodes_and_types[ctx.expr()[0].getText()]
 
@@ -1080,7 +998,7 @@ class outputHandler(testListener):
 
             # Collect method call parameters from the context
             for ch in ctx.children:
-                if isinstance(ch, testParser.ExprContext):
+                if isinstance(ch, YAPLParser.ExprContext):
                     parameters.append(ch)
             parameters.pop(0)  # Remove the first parameter which is the object itself
 
@@ -1151,14 +1069,14 @@ class outputHandler(testListener):
 
         # Enter function for a let expression
     
-    def enterLet_expr(self, ctx: testParser.Add_exprContext):
+    def enterLet_expr(self, ctx: YAPLParser.Add_exprContext):
         # Get the total number of child nodes
-        hijos = ctx.getChildCount()
+        child_s = ctx.getChildCount()
         
         # Iterate through the child nodes
-        for i in range(hijos):
+        for i in range(child_s):
             # Check if the child node is of type 'Var_typeContext' (indicating a variable declaration)
-            if isinstance(ctx.getChild(i), testParser.Var_typeContext):
+            if isinstance(ctx.getChild(i), YAPLParser.Var_typeContext):
                 # Get the variable type and identifier from the context
                 type = ctx.getChild(i).getText()
                 id = ctx.getChild(i-2).getText()
@@ -1193,8 +1111,11 @@ class outputHandler(testListener):
                     self.nodes_and_types[ctx.getText()] = self.ERROR
 
     # Exit function for a let expression
-    def exitLet_expr(self, ctx: testParser.Let_exprContext):
+    def exitLet_expr(self, ctx: YAPLParser.Let_exprContext):
         # Set the type of the current expression to the type of the last expression in the 'let' block
         self.nodes_and_types[ctx.getText()] = self.nodes_and_types[ctx.expr()[-1].getText()]
-            
-    
+
+path = "test/arith.cl"
+
+to_compile = Compiler(path)
+print(to_compile.printer.my_errors.get_errors())

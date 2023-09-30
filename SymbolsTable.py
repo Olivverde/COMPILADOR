@@ -49,7 +49,7 @@ class SymbolTable():
 
     def getSize(self):
         # Calculate and return the total size of symbols in the symbol table.
-        return sum([s["Size"] for s in self.symbol_table])
+        return sum([s["size"] for s in self.symbol_table])
 
     def toTable(self):
         # Display the symbol table in a formatted table.
@@ -132,16 +132,23 @@ class ParameterTable():
     def __init__(self):
         # Initialize the parameter table with an empty table and a PrettyTable for formatting.
         self.to_pretty = PrettyTable()
-        self.param_table = []  # List to store parameters
+        self.class_table = [] # List to store parameters
+        self.add_class('IO', 'IO', "", ["out_string", "out_int", "in_string", "in_int"])
+        self.add_class('Object', 'Object', "", ["abort", "type_name", "copy"])
+        self.add_class('String', 'String', "", ["length", "concat", "substr"])
+        self.add_class('Int', 'Int', "", [])
+        self.add_class('Bool', 'Bool', "", []),
 
-    def add(self, type, id):
+    def add(self, id, desc, heredits, meth):
         # Add a new parameter to the parameter table.
         # Parameters:
         #   - type: Data type of the parameter.
         #   - id: Identifier name of the parameter.
         self.param_table.append({
-            "type": type,
-            "ID": id
+            "ID": id,
+            "DESC": desc,
+            "HEREDITS": heredits,
+            "METHODS": meth
         })
 
     def search(self, id):
@@ -150,25 +157,29 @@ class ParameterTable():
         #   - id: Identifier name to search for.
         # Returns:
         #   - The parameter if found, None otherwise.
-        this_par = self.param_table.copy()
-        this_par.reverse()
-        for par in this_par:
+        this_class = self.param_table.copy()
+        this_class.reverse()
+        for par in this_class:
             if par["ID"] == id:
                 return par
         return None  # Parameter not found
 
-    def toTable(self):
-        # Display the parameter table in a formatted table.
-        self.to_pretty.field_names = ["Type", "ID"]
-        for par in self.param_table:
-            self.to_pretty.add_row(list(par.values()))
-        print(self.to_pretty)
-        self.to_pretty.clear_rows()  # Clear the table for future use
+    def add_method(self, name_class, name_method):
+        # adding a method to a specific class
+        for class_ in self.class_table:
+            if class_["ID"] == name_class:
+                print("Inside", class_["ID"], name_class)
+                print(class_)
+                class_["methods"].append(name_method)
+                print(class_)
 
-    def free(self):
-        # Display the parameter table and then clear it.
-        self.toTable()
-        self.param_table = []  # Clear the parameter table
+    def print_table(self):
+        # print table
+        self.to_pretty.field_names = ["ID", "Description", "Heredits", "Methods"]
+        for class_ in self.class_table:
+            self.to_pretty.add_row(list(class_.values()))
+        print(self.to_pretty)
+        self.to_pretty.clear_rows()
 
 
 """
@@ -221,8 +232,11 @@ class ClassTable():
     def add(self, class_name, method_name):
         # Add a method to a class by its name.
         for class_ in self.class_table:
-            if class_["Id"] == class_name:
+            if class_["id"] == class_name:
+                print("Dentro", class_["id"], class_name)
+                print(class_)
                 class_["methods"].append(method_name)
+                print(class_)
 
     def toTable(self):
         # Display the class table in a formatted table.
@@ -328,6 +342,7 @@ class ErrorTypes():
         self.while_no_bool = 'A "while" condition must have a boolean expression'
         self.diff_asign = 'It is not possible to assign a different type than the one defined'
         self.no_method = 'It is not possible to call a method or variable that has not been defined'
+        self.prim_her = 'Inheritance to primitive classes is not possible'
 
     def add_error(self, error, line, col):
         # Add a new error entry to the error table.

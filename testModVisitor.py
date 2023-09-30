@@ -9,16 +9,18 @@ class myVisitor(YAPLParser):
 
     def visitClass(self, ctx):
         this_class = ctx.var_type()[0].getText()
-        self.symtab.add_symb(str(this_class), "Class: "+str(this_class), "General")
+        self.symtab.add_symb(str(this_class), f"Class: {str(this_class)}", "General")
         return self.visitChildren(ctx)
 
     def visitFeature(self, ctx):
         this_feature = ctx.var_id().getText()
         this_type = ctx.var_type().getText()
         if "<-" in ctx.getText():
-            self.symtab.add_symb(str(this_feature), "Feature: "+str(this_type), "Set Feature")
+            self.symtab.add_symb(str(this_feature), f"Feature: {str(this_type)}", "Set Feature")
         else:
-            self.symtab.add_symb(str(this_feature), "Feature: "+str(this_type), "Brace Feature")
+            self.symtab.add_symb(
+                str(this_feature), f"Feature: {str(this_type)}", "Brace Feature"
+            )
         return super().visitChildren(ctx)
 
 
@@ -49,7 +51,7 @@ class myVisitor(YAPLParser):
     def visitLet_expr(self, ctx: testParser.Let_exprContext):
         this_name = ctx.var_id()
         this_type = ctx.var_type()
-        for i in range(0, len(this_name)):
+        for i in range(len(this_name)):
             self.symtab.add_symb(str(this_name[i].getText()), str(this_type[i].getText()), "Let Variable" if i == 0 else "Let Parameter")
         return super().visitChildren(ctx)
     

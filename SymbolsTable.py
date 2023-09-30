@@ -42,14 +42,11 @@ class SymbolTable():
         #   - The symbol if found, None otherwise.
         this_symb = self.symbol_table.copy()
         this_symb.reverse()
-        for symbol in this_symb:
-            if symbol["ID"] == var_id:
-                return symbol
-        return None  # Symbol not found
+        return next((symbol for symbol in this_symb if symbol["ID"] == var_id), None)
 
     def getSize(self):
         # Calculate and return the total size of symbols in the symbol table.
-        return sum([s["size"] for s in self.symbol_table])
+        return sum(s["size"] for s in self.symbol_table)
 
     def toTable(self):
         # Display the symbol table in a formatted table.
@@ -106,10 +103,7 @@ class TypeTable():
         #   - The type entry if found, None otherwise.
         this_symb = self.type_table.copy()
         this_symb.reverse()
-        for symbol in this_symb:
-            if symbol["type"] == type:
-                return symbol
-        return None  # Type not found
+        return next((symbol for symbol in this_symb if symbol["type"] == type), None)
 
     def toTable(self):
         # Display the type table in a formatted table.
@@ -159,10 +153,7 @@ class ParameterTable():
         #   - The parameter if found, None otherwise.
         this_class = self.param_table.copy()
         this_class.reverse()
-        for par in this_class:
-            if par["ID"] == id:
-                return par
-        return None  # Parameter not found
+        return next((par for par in this_class if par["ID"] == id), None)
 
     def add_method(self, name_class, name_method):
         # adding a method to a specific class
@@ -224,10 +215,7 @@ class ClassTable():
         #   - The class entry if found, None otherwise.
         this_class = self.class_table.copy()
         this_class.reverse()
-        for class_ in this_class:
-            if class_["Id"] == id:
-                return class_
-        return None
+        return next((class_ for class_ in this_class if class_["Id"] == id), None)
 
     def add(self, class_name, method_name):
         # Add a method to a class by its name.
@@ -289,15 +277,9 @@ class MethodTable():
         })
 
     def search(self, id):
-        # Search for a method by its identifier.
-        # Parameters:
-        #   - id: The method name to search for.
-        # Returns:
-        #   - The method entry if found, None otherwise.
-        for method in self.method_table:
-            if method["id"] == id:
-                return method
-        return None  # method not found
+        return next(
+            (method for method in self.method_table if method["id"] == id), None
+        )
 
     def toTable(self):
         # Display the method table in a formatted table.
@@ -357,8 +339,7 @@ class ErrorTypes():
         })
     
     def get_errors(self):
-        # Get a list of error messages in a user-friendly format.
-        ui_errors = []
-        for error in self.error_table:
-            ui_errors.append(f'Error: {error["error"]} at line {error["line"]}, column {error["col"]}')
-        return ui_errors
+        return [
+            f'Error: {error["error"]} at line {error["line"]}, column {error["col"]}'
+            for error in self.error_table
+        ]

@@ -382,7 +382,20 @@ class Intermediate(testListener):
         Laura
         
         _summary_
-        Exit the "exitPar_expr" phase
+        exit the "Not_expr" phase
+    """
+    def exitNot_expr(self, ctx: testParser.Not_exprContext):
+        # The type of the child and the code of the inner expression are taken.
+        self.nodes_and_types[ctx.getText()] = self.nodes_and_types[ctx.getChild(1).getText()]
+        self.nodes_and_codes[ctx.getText()] = self.nodes_and_codes[ctx.expr().getText()]
+    
+
+    """
+        _Author_
+        Laura
+        
+        _summary_
+        Entry the "Not_expr" phase
     """
     def enterNot_expr(self, ctx: testParser.Not_exprContext):
         # We check if your code exists
@@ -402,4 +415,283 @@ class Intermediate(testListener):
                 'true': false,
                 'next': next_
             }
+
+    """
+        _Author_
+        Laura
+        
+        _summary_
+        Exit the "Eq_expr" phase
+    """
+    def exitEq_expr(self, ctx: testParser.Eq_exprContext):
+        kid1 = ctx.getChild(0).getText()
+        kid2 = ctx.getChild(2).getText()
+        # We grab the current code of the node
+        this_code = self.nodes_and_codes[ctx.getText()]
+        # change the code, add the children's code in case they have something before, then create the if structure and where to exit based on the true and false states
+        to_set = self.nodes_and_codes[kid1]['code'] + self.nodes_and_codes[kid2]['code'] + \
+                    ['IF ' + self.nodes_and_codes[kid1]['addr'][0] + f' {ctx.EQUAL_OP().getText()}= ' + self.nodes_and_codes[kid2]['addr'][0] + ' GOTO ' + this_code['true']] + \
+                    ['GOTO ' + this_code['false']]
+
+        # We set the state parameters and the code in case it will be used later
+        false = self.nodes_and_codes[ctx.getText()]['false']
+        true = self.nodes_and_codes[ctx.getText()]['true']
+        next_ = self.nodes_and_codes[ctx.getText()]['next']
+        self.nodes_and_codes[ctx.getText()] = {
+            'code': to_set,
+            'false': false,
+            'true': true,
+            'next': next_
+        }
+        # Node and type
+        self.nodes_and_types[ctx.getText()] = self.BOOL
+    
+    """
+        _Author_
+        Laura
+        
+        _summary_
+        Exit the "LessEq_expr" phase
+    """
+    def exitLessEq_expr(self, ctx: testParser.LessEq_exprContext):
+        kid1 = ctx.getChild(0).getText()
+        kid2 = ctx.getChild(2).getText()
+        # the current code of the node
+        this_code = self.nodes_and_codes[ctx.getText()]
+        # dd the children's code in case they have something before, then create the if structure and where to exit based on the true and false states
+        to_set = self.nodes_and_codes[kid1]['code'] + self.nodes_and_codes[kid2]['code'] + \
+                    ['IF ' + self.nodes_and_codes[kid1]['addr'][0] + f' {ctx.LESS_EQ_OP().getText()} ' + self.nodes_and_codes[kid2]['addr'][0] + ' GOTO ' + this_code['true']] + \
+                    ['GOTO ' + this_code['false']]
+        # Set the state parameters and the code in case it will be used later
+        false = self.nodes_and_codes[ctx.getText()]['false']
+        true = self.nodes_and_codes[ctx.getText()]['true']
+        self.nodes_and_codes[ctx.getText()] = {
+            'code': to_set,
+            'false': false,
+            'true': true,
+        }
+        #Node and type
+        self.nodes_and_types[ctx.getText()] = self.BOOL
+
+    """
+        _Author_
+        Laura
+        
+        _summary_
+        Exit the "Less_expr" phase
+    """
+    def exitLess_expr(self, ctx: testParser.Less_exprContext):
+        kid1 = ctx.getChild(0).getText()
+        kid2 = ctx.getChild(2).getText()
+        # The current code of the node
+        this_code = self.nodes_and_codes[ctx.getText()]
+        # Add the children's code in case they have something before, then create the if structure and where to exit based on the true and false states
+        to_set = self.nodes_and_codes[kid1]['code'] + self.nodes_and_codes[kid2]['code'] + \
+                    ['IF ' + self.nodes_and_codes[kid1]['addr'][0] + f' {ctx.LESS_OP().getText()} ' + self.nodes_and_codes[kid2]['addr'][0] + ' GOTO ' + this_code['true']] + \
+                    ['GOTO ' + this_code['false']]
+        # Set the state parameters and the code in case it will be used later
+        false = self.nodes_and_codes[ctx.getText()]['false']
+        true = self.nodes_and_codes[ctx.getText()]['true']
+        self.nodes_and_codes[ctx.getText()] = {
+            'code': to_set,
+            'false': false,
+            'true': true,
+        }
+        # Node and type
+        self.nodes_and_types[ctx.getText()] = self.BOOL
+
+
+    """
+        _Author_
+        Laura
+        
+        _summary_
+        Exit the "Neg_expr" phase
+    """
+    def exitNeg_expr(self, ctx: testParser.Neg_exprContext):
+        # The type of the child and create the child
+        self.nodes_and_types[ctx.getText()] = self.nodes_and_types[ctx.getChild(1).getText()]
+        # The address is defined as a temporary momentary
+        addr = self.get_new_temp()
+        # The code will be the union between the code of the child, and the structure defined as addres = -addressChils
+        code = self.nodes_and_codes[ctx.getChild(1).getText()]['code'] + [addr + ' = ' + '-' + self.nodes_and_codes[ctx.getChild(1).getText()]['addr'][0]]
+        self.temp_rt(self.nodes_and_codes[ctx.getChild(1).getText()]['addr'])
+        #  add node with code
+        self.nodes_and_codes[ctx.getText()] = {
+            'addr': (addr, True),
+            'code': code
+        }
+
+    """
+        _Author_
+        Laura
+        
+        _summary_
+        Exit the "Add_expr" phase
+    """
+    def exitAdd_expr(self, ctx: testParser.Add_exprContext):
+        kid1 = ctx.getChild(0).getText()
+        kid2 = ctx.getChild(2).getText()
+
+        # Intermediate code is created based on the code of both children, and the new structure with temporary variables
+        addr = self.get_new_temp()
+        code = self.nodes_and_codes[kid1]['code'] + \
+            self.nodes_and_codes[kid2]['code'] + \
+            [addr + ' = ' + self.nodes_and_codes[kid1]['addr'][0] + ' ' + ctx.getChild(1).getText() + ' ' + self.nodes_and_codes[kid2]['addr'][0]]
+
+        self.temp_rt(self.nodes_and_codes[kid2]['addr'])
+        self.temp_rt(self.nodes_and_codes[kid1]['addr'])
+        #Add node with code
+        self.nodes_and_codes[ctx.getText()] = {
+            'addr': (addr, True),
+            'code': code
+        }
+        # Define the type as an integer
+        self.nodes_and_types[ctx.getText()] = self.INT
+
+
+    """
+        _Author_
+        Laura
+        
+        _summary_
+        Exit the "Sub_expr" phase
+    """
+    def exitSub_expr(self, ctx: testParser.Sub_exprContext):
+        kid1 = ctx.getChild(0).getText()
+        kid2 = ctx.getChild(2).getText()
+
+        # Intermediate code is created based on the code of both children, and the new structure with temporary variables
+        addr = self.get_new_temp()
+        code = self.nodes_and_codes[kid1]['code'] + \
+            self.nodes_and_codes[kid2]['code'] + \
+            [addr + ' = ' + self.nodes_and_codes[kid1]['addr'][0] + ' ' + ctx.getChild(1).getText() + ' ' + self.nodes_and_codes[kid2]['addr'][0]]
+
+        self.temp_rt(self.nodes_and_codes[kid2]['addr'])
+        self.temp_rt(self.nodes_and_codes[kid1]['addr'])
+
+        self.nodes_and_codes[ctx.getText()] = {
+            'addr': (addr, True),
+            'code': code
+        }
+        # Define the type as an integer
+        self.nodes_and_types[ctx.getText()] = self.INT
+
+
+    """
+        _Author_
+        Laura
+        
+        _summary_
+        Exit the "Div_expr" phase
+    """
+    def exitDiv_expr(self, ctx: testParser.Div_exprContext):
+        kid1 = ctx.getChild(0).getText()
+        kid2 = ctx.getChild(2).getText()
+
+        # Intermediate code is created based on the code of both children, and the new structure with temporary variables
+        addr = self.get_new_temp()
+        code = self.nodes_and_codes[kid1]['code'] + \
+            self.nodes_and_codes[kid2]['code'] + \
+            [addr + ' = ' + self.nodes_and_codes[kid1]['addr'][0] + ' ' + ctx.getChild(1).getText() + ' ' + self.nodes_and_codes[kid2]['addr'][0]]
+
+        self.temp_rt(self.nodes_and_codes[kid2]['addr'])
+        self.temp_rt(self.nodes_and_codes[kid1]['addr'])
+        # Add node with code
+        self.nodes_and_codes[ctx.getText()] = {
+            'addr': (addr, True),
+            'code': code
+        }
+        # Define the type as an integer
+        self.nodes_and_types[ctx.getText()] = self.INT
+
+
+    """
+        _Author_
+        Laura
+        
+        _summary_
+        Exit the "Mul_expr" phase
+    """
+    def exitMul_expr(self, ctx: testParser.Mul_exprContext):
+        kid1 = ctx.getChild(0).getText()
+        kid2 = ctx.getChild(2).getText()
+
+        # Intermediate code is created based on the code of both children, and the new structure with temporary variables
+        addr = self.get_new_temp()
+        code = self.nodes_and_codes[kid1]['code'] + \
+            self.nodes_and_codes[kid2]['code'] + \
+            [addr + ' = ' + self.nodes_and_codes[kid1]['addr'][0] + ' ' + ctx.getChild(1).getText() + ' ' + self.nodes_and_codes[kid2]['addr'][0]]
+
+        self.temp_rt(self.nodes_and_codes[kid2]['addr'])
+        self.temp_rt(self.nodes_and_codes[kid1]['addr'])
+        # Add node with code
+        self.nodes_and_codes[ctx.getText()] = {
+            'addr': (addr, True),
+            'code': code
+        }
+        # Define the type as an integer
+        self.nodes_and_types[ctx.getText()] = self.INT
+
+
+    """
+        _Author_
+        Laura
+        
+        _summary_
+        Exit the "Void_expr" phase
+    """
+    def exitVoid_expr(self, ctx: testParser.Void_exprContext):
+        kid1 = ctx.getChild(1).getText()
+        # Define the type as a boolean
+        self.nodes_and_types[ctx.getText()] = self.BOOL
+
+        # Intermediate code is created based on the code of both children and a structure to check if it is void
+        addr = self.get_new_temp()
+        code = self.nodes_and_codes[kid1]['code'] + \
+            [addr + ' = is_void ' + self.nodes_and_codes[kid1]['addr'][0]]
+        self.temp_rt(self.nodes_and_codes[kid1]['addr'])
+        self.nodes_and_codes[ctx.getText()] = {
+            'addr': (addr, True),
+            'code': code
+        }
+
+
+    """
+        _Author_
+        Laura
+        
+        _summary_
+        Exit the "BR_expr" phase
+    """
+    def exitBr_expr(self, ctx: testParser.Br_exprContext):
+        hijos_tipo = []
+        # Get types of all children
+        for i in ctx.children:
+            if not isinstance(i, TerminalNode):
+                if i.getText() == 'self':
+                    hijos_tipo.append(self.nodes_and_types[i.getText()+self.method_table.search(self.current_scope.scope_name)['parent']])
+                else:
+                    hijos_tipo.append(self.nodes_and_types[i.getText()])
+
+        addr = ''
+        code = []
+        # Obtain the code of all the children
+        exprs = ctx.expr()
+        for i in range(len(exprs)):
+            code += self.nodes_and_codes[exprs[i].getText()]['code']
+
+            if 'next' in self.nodes_and_codes[exprs[i].getText()].keys():
+                code += [self.nodes_and_codes[exprs[i].getText()]['next']]
+            else:
+                pass
+
+        # Add the code of all the children, leaving the address empty
+        self.nodes_and_codes[ctx.getText()] = {
+            'addr': (addr, False),
+            'code': code
+            }
+
+        # Define its type as equal to the last of the children
+        self.nodes_and_types[ctx.getText()] = hijos_tipo[-1]
 

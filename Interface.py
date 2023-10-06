@@ -98,7 +98,7 @@ class defaultWindow(QMainWindow):
 
     # Open file function
     def open_file(self):
-        f_path, _ = QFileDialog.getOpenFileName(self, "Abrir archivo", "", "Archivos YAPL (*.YAPL);; Archivos de texto (*.txt)")
+        f_path, _ = QFileDialog.getOpenFileName(self, "Abrir archivo", "", "Archivos YAPL (*.YAPL);; Archivos de texto (*.txt);; Archivos CL (*.cl)")
         if f_path:
             try:
                 with open(f_path, "r") as file:
@@ -128,7 +128,7 @@ class defaultWindow(QMainWindow):
     
     # Function to save file to a specific path
     def save_file_as(self):
-        f_path, _ = QFileDialog.getSaveFileName(self, "Guardar archivo", "", "Archivos de texto (*.txt);; Archivos YAPL (*.YAPL)")
+        f_path, _ = QFileDialog.getSaveFileName(self, "Guardar archivo", "", "Archivos de texto (*.txt);; Archivos YAPL (*.YAPL);; Archivos CL (*.cl)")
         if f_path:
             self.save_in_path(f_path)
     

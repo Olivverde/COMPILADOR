@@ -1,4 +1,5 @@
 # LIBS
+
 from antlr4 import *
 from SymbolsTable import *
 import antlr4.Utils as Utils
@@ -105,6 +106,30 @@ class MyErrorListener(ErrorListener):
         # Retrieve the list of syntax errors
         return self.syntaxErrors
 
+"""
+_Author_
+Oliver
+
+_summary_
+Represents a token in the source code with attributes for token value, line number, and token type.
+
+_Attributes_
+    token: The actual token value.
+    line: The line number where the token was found.
+    token_type: The type of the token.
+"""
+
+class Tokens():
+    def __init__(self, token, line, token_type):
+        # Initialize a Token object with token value, line number, and token type
+        self.token = token  # The actual token value
+        self.line = line    # The line number where the token was found
+        self.token_type = token_type  # The type of the token
+
+# Example usage:
+# my_token = Token("my_identifier", 10, "IDENTIFIER")
+
+
 
 """
 _Author_
@@ -128,75 +153,74 @@ Oliver
 """
 class Compiler:
     def __init__(self, file):
-        # Initialize the compiler with the given file name
+
         filename = file
-        self.LexErr = None  # Initialize lexical error as None
-        self.SintErr = None  # Initialize syntax error as None
-        self.SemErr = None  # Initialize semantic error as None
+        self.SintErr = None
+        self.SemErr = None
 
         print(f'Parsing file: {filename}')
 
-        # Create a FileStream and lexer
+        #Se genera un stream de tokens a analizar por el lexer
         inputStream = FileStream(filename)
         lexer = testLexer(inputStream)
         stream = CommonTokenStream(lexer)
 
+        #Parametros inciales para la obtencion de errores
         contentHasErr = False
         errorTks = []
+        #Token inicial
         actualTk = lexer.nextToken()
 
-        # Token scanning loop
+        #Recorrido de Tokens y verificar si son errores, si es error se agrega en la lista de tokens de error para que no muera al primero
         while actualTk.type != Token.EOF:
             is_error = getError(actualTk.type)
             if not is_error:
-                errorTks.append(f'-> Unrecognized character: {actualTk.text} at line: {actualTk.line}\n')
+                errorTks.append(f' - Error: caracter no reconocido: {actualTk.text} en linea: {actualTk.line}\n')
                 contentHasErr = True
-            
+
             actualTk = lexer.nextToken()
 
-        # Determine if lexical errors occurred
-        if not contentHasErr:
-            self.LexErr = None
-        else:
-            self.LexErr = errorTks
-
+        #Si hay errores se ingresan a los parametros de la clase para que puedan ser accedidos por la interfaz
+        self.LexErr = None if not contentHasErr else errorTks
+        #Reiniciamos el lexer al primer token para realizar el analisis sintactico
         lexer.reset()
-
         stream = CommonTokenStream(lexer)
         parser = YAPLParser(stream)
 
+        #Quitamos el manejo de errores base de la libreria y utilizamos el nuestro
         parser.removeErrorListeners()
         listener = MyErrorListener()
         parser.addErrorListener(listener)
+
+        #Parseo del archivo y obtencion de errores
         parser.buildParseTrees = True
         tree = parser.program()
         rulenames = parser.ruleNames
 
-        # Generate a pretty-printed parse tree
+        #Representacion visual simple del arbol de tokens
         self.prettyTree = TreeUtils().toPrettyTree(tree, rulenames)
         print(self.prettyTree)
 
+        #Formato de los error para luego ser utilizado por la interfaz
         self.listErr = listener.getErrors()
-
-        # Determine if syntax errors occurred
         if len(self.listErr) > 0:
-            sintErr = ""
-            for err in self.listErr:
-                sintErr += err + "\n"
+            sintErr = "".join(err + "\n" for err in self.listErr)
             self.SintErr = sintErr
             contentHasErr = True
 
+        #Analisis semantico y obtencion de errores
+        #Usamos nuestro propio Listener y visitamos todos los nodos
         self.printer = outputHandler()
         walker = ParseTreeWalker()
         walker.walk(self.printer, tree)
 
+        #Obtenemos errores y le damos formato
         if len(self.printer.my_errors.get_errors()) > 0:
-            SemErr = ""
-            for err in self.printer.my_errors.get_errors():
-                SemErr += err + "\n"
+            SemErr = "".join(err + "\n" for err in self.printer.my_errors.get_errors())
             self.SemErr = SemErr
             contentHasErr = True
 
+        #En caso de que nada tenga error obtnemos el codigo intermedio
         if not contentHasErr:
             lexer.reset()
 
@@ -208,26 +232,14 @@ class Compiler:
             parser.addErrorListener(listener)
             parser.buildParseTrees = True
             tree = parser.program()
-            # Through the tree again but now generating intermediate code
+            #Recorremos nuevamente el arbol pero ahora generando codigo intermedio
             self.codePrinter = Intermediate()
             walker = ParseTreeWalker()
             walker.walk(self.codePrinter, tree)
 
             self.this_code = self.codePrinter.code_generated
-            
+
             self.code_to_print = '\n'.join(self.this_code)
-        
-        """ # If no syntax errors, proceed with semantic analysis
-        if len(self.listErr) <= 0:
-            self.printer = outputHandler()
-            walker = ParseTreeWalker()
-            walker.walk(self.printer, tree)
-            if len(self.printer.my_errors.get_errors()) > 0:
-                SemErr = ""
-                for err in self.printer.my_errors.get_errors():
-                    SemErr += err + "\n"
-                self.SemErr = SemErr """
-                
 
 class outputHandler(YAPLListener):
     def __init__(self):
@@ -245,7 +257,7 @@ class outputHandler(YAPLListener):
         self.ERROR = "error"
         self.OBJECT = "Object"
 
-        """ # Create a dictionary for mapping data type names to constants.
+        # Create a dictionary for mapping data type names to constants.
         self.data_types = {
             "String": self.STRING,
             "Int": self.INT,
@@ -255,7 +267,7 @@ class outputHandler(YAPLListener):
             "IO": self.IO,
             "error": self.ERROR,
             "Object": self.OBJECT
-        } """
+        }
 
         self.scopes = []
         self.scope_register = []
@@ -288,16 +300,15 @@ class outputHandler(YAPLListener):
     def get_var(self, id):
         # Search for a variable by its identifier within the current and outer scopes.
         this_var = self.current_scope.search(id)
-        if this_var is None:
-            revers_scopes = self.scopes.copy()
-            revers_scopes.reverse()
-            for scope in revers_scopes:
-                this_var_new = scope.search(id)
-                if this_var_new is not None:
-                    return this_var_new
-            return None
-        else:
+        if this_var is not None:
             return this_var
+        revers_scopes = self.scopes.copy()
+        revers_scopes.reverse()
+        for scope in revers_scopes:
+            this_var_new = scope.search(id)
+            if this_var_new is not None:
+                return this_var_new
+        return None
 
     def enterProgram(self, ctx: YAPLParser.ProgramContext):
         # Initialize the program scope and add the "self" variable.
@@ -311,13 +322,15 @@ class outputHandler(YAPLListener):
             if isinstance(child, TerminalNode):
                 continue
             if child.getText() == 'self':
-                if self.nodes_and_types[child.getText()+self.method_table.search(self.current_scope.scope_name)['parent']] == self.ERROR:
-                    return True
-                else:
-                    return False
-            if child.getText() == "String" or child.getText() == "Int" or child.getText() == "Bool" or child.getText() == "Object":
-                continue
-
+                return (
+                    self.nodes_and_types[
+                        child.getText()
+                        + self.method_table.search(self.current_scope.scope_name)[
+                            'parent'
+                        ]
+                    ]
+                    == self.ERROR
+                )
             if self.nodes_and_types[child.getText()] == self.ERROR:
                 return True
         return False
@@ -325,20 +338,18 @@ class outputHandler(YAPLListener):
     def exitProgram(self, ctx: YAPLParser.ProgramContext):
         # Perform checks and print symbol tables and types.
         main_class = self.class_table.search("Main")
-        if main_class is not None:
-            if 'main' in main_class['methods']:
-                if main_class["inherits"] != "":
-                    self.nodes_and_types[ctx.getText()] = self.ERROR
-                    self.my_errors.add_error(self.my_errors.main_her, 0, 0)
-                else:
-                    self.nodes_and_types[ctx.getText()] = self.VOID
-            else:
-                self.nodes_and_types[ctx.getText()] = self.ERROR
-                self.my_errors.add_error(self.my_errors.no_main, 0, 0)
+        if (
+            main_class is not None
+            and 'main' in main_class['methods']
+            and main_class["inherits"] != ""
+        ):
+            self.nodes_and_types[ctx.getText()] = self.ERROR
+            self.my_errors.add_error(self.my_errors.main_her, 0, 0)
+        elif main_class is not None and 'main' in main_class['methods']:
+            self.nodes_and_types[ctx.getText()] = self.VOID
         else:
             self.nodes_and_types[ctx.getText()] = self.ERROR
             self.my_errors.add_error(self.my_errors.no_main, 0, 0)
-        
         # Print symbol tables and all types found.
         print("---------------Class Table---------------")
         self.class_table.toTable()
@@ -346,12 +357,10 @@ class outputHandler(YAPLListener):
         self.type_table.toTable()
         print("\n\n---------------Method Table---------------")
         self.method_table.toTable()
-
         
-        ############################################################################# TEMPORARY DEPRECATED
-        # print("--------------All types found ----------------")
-        # for i in self.nodes_and_types:
-        #     print("Structure: ", i, " Type: ", self.nodes_and_types[i])
+        print("--------------All types found ----------------")
+        for i in self.nodes_and_types:
+            print("Structure: ", i, " Type: ", self.nodes_and_types[i])
 
     def enterClass(self, ctx: YAPLParser.ClassContext):
     # Get the class name and initialize variables.
@@ -366,16 +375,10 @@ class outputHandler(YAPLListener):
                 inherits = ctx.getChild(3).getText()
                 
                 # Validate the inheritance relationship.
-                if self.class_table.search(inherits) == None:
-                    self.nodes_and_types[inherits] = self.ERROR
-                    self.nodes_and_types[this_class] = self.ERROR
+                if self.class_table.search(inherits) is None:
                     self.my_errors.add_error(self.my_errors.no_her, ctx.getChild(3).start.line, ctx.getChild(3).start.column)
                 elif inherits == this_class:
-                    self.nodes_and_types[this_class] = self.ERROR
                     self.my_errors.add_error(self.my_errors.self_her, ctx.getChild(3).start.line, ctx.getChild(3).start.column)
-                elif inherits == "String" or inherits == "Int" or inherits == "Bool" or inherits == "Object":
-                    self.nodes_and_types[this_class] = self.ERROR
-                    self.my_errors.add_error(self.my_errors.prim_her, ctx.getChild(3).start.line, ctx.getChild(3).start.column)
                 else:
                     methods = self.class_table.search(inherits)['methods'].copy()
 
@@ -388,7 +391,6 @@ class outputHandler(YAPLListener):
             line = ctx.start.line
             column = ctx.start.column
             self.my_errors.add_error(self.my_errors.redef, line, column)
-            self.nodes_and_types[this_class] = self.ERROR
 
         # Push a new scope for the class.
         self.scope_push(this_class)
@@ -401,14 +403,8 @@ class outputHandler(YAPLListener):
         size_scope = self.current_scope.getSize()
         self.type_table.search(this_class)['size'] = size_scope
 
-        #Errors in child nodes
-        hasError = self.BelowNodesHasError(ctx)
-        if hasError:
-            self.nodes_and_types[ctx.getText()] = self.ERROR
-        else:
-            # Set the type of the class context to VOID.
-            self.nodes_and_types[ctx.getText()] = self.VOID
-
+        # Set the type of the class context to VOID.
+        self.nodes_and_types[ctx.getText()] = self.VOID
 
         # Register the current scope and pop it from the stack.
         self.scope_register.append(self.current_scope)
@@ -438,6 +434,7 @@ class outputHandler(YAPLListener):
             self.nodes_and_types[ctx.getText()] = self.nodes_and_types[parent]
         
     def exitVar_expr(self, ctx: YAPLParser.Var_exprContext):
+        # sourcery skip: avoid-builtin-shadow
         # Get the parent context and check if it or the current context has a known type.
         parent = ctx.parentCtx.getText()
         if parent in self.nodes_and_types.keys() or ctx.getText() in self.nodes_and_types.keys():
@@ -448,60 +445,34 @@ class outputHandler(YAPLListener):
         this_var = self.get_var(id)
 
         # Check if the variable is not defined.
-        if this_var == None:
+        if this_var is None:
             line = ctx.start.line
             column = ctx.start.column
             self.my_errors.add_error(self.my_errors.no_def, line, column)
             self.nodes_and_types[ctx.getText()] = self.ERROR
+        elif this_var["type"] in [self.INT, self.BOOL, self.STRING]:
+            self.nodes_and_types[ctx.getText()] = this_var["type"]
+        elif this_var["type"] == "SELF_TYPE":
+            # Handle SELF_TYPE by associating the type with its parent class.
+            self.nodes_and_types[ctx.getText()+self.method_table.search(self.current_scope.scope_name)['parent']] = self.method_table.search(self.current_scope.scope_name)['parent']
+            self.method_table.search(self.current_scope.scope_name)['type'] = self.method_table.search(self.current_scope.scope_name)['parent']
         else:
-            # Check the type of the variable and set it accordingly.
-            if this_var["type"] in [self.INT, self.BOOL, self.STRING]:
-                self.nodes_and_types[ctx.getText()] = this_var["type"]
-            elif this_var["type"] == "SELF_TYPE":
-                # Handle SELF_TYPE by associating the type with its parent class.
-                self.nodes_and_types[ctx.getText()+self.method_table.search(self.current_scope.scope_name)['parent']] = self.method_table.search(self.current_scope.scope_name)['parent']
-                self.method_table.search(self.current_scope.scope_name)['type'] = self.method_table.search(self.current_scope.scope_name)['parent']
-            else:
-                self.nodes_and_types[ctx.getText()] = self.VOID
+            self.nodes_and_types[ctx.getText()] = self.VOID
 
     def enterClass_method(self, ctx: YAPLParser.Class_methodContext):
+        # sourcery skip: low-code-quality
         # Get the method's name.
         methodsName = ctx.var_id()[0].getText()
         parameters = []
 
         # Check if the method is not redefined.
-        if self.method_table.search(methodsName) == None:
+        if self.method_table.search(methodsName) is None:
             _type = ctx.return_type().var_type().getText()
             is_type = self.type_table.search(_type)
 
             # Check if the return type is valid.
             if is_type != None:
-                child_s = ctx.getChildCount()
-                for i in range(child_s):
-                    if isinstance(ctx.getChild(i), YAPLParser.Var_typeContext):
-                        par_type = ctx.getChild(i).getText()
-                        is_type = self.type_table.search(par_type)
-
-                        # Check if the parameter type is valid.
-                        if is_type != None:
-                            par_id = ctx.getChild(i - 2).getText()
-                            if par_id in [i['id'] for i in parameters]:
-                                line = ctx.getChild(i).start.line
-                                col = ctx.getChild(i).start.column
-                                self.my_errors.add_error(self.my_errors.redef, line, col)
-                            parameters.append({"type": par_type, "id": par_id})
-                            #self.par_table.add(par_type, par_id)
-                        else:
-                            line = ctx.return_type().var_type().start.line
-                            column = ctx.return_type().var_type().start.column
-                            self.my_errors.add_error(self.my_errors.no_type, line, column)
-
-                parent = ctx.parentCtx
-                parent_name = parent.var_type()[0].getText()
-
-                # Add the method to the method table and the class's list of methods.
-                self.method_table.add(_type, methodsName, parameters, parent_name)
-                self.class_table.search(parent_name)['methods'].append(methodsName)
+                self._extracted_from_enterClass_method_14(ctx, parameters, _type, methodsName)
             else:
                 line = ctx.return_type().var_type().start.line
                 column = ctx.return_type().var_type().start.column
@@ -519,12 +490,41 @@ class outputHandler(YAPLListener):
             off = self.current_scope.this_off
             self.current_scope.add(par['type'], par['id'], size, off, True)
 
+    # TODO Rename this here and in `enterClass_method`
+    def _extracted_from_enterClass_method_14(self, ctx, parameters, _type, methodsName):
+        child_s = ctx.getChildCount()
+        for i in range(child_s):
+            if isinstance(ctx.getChild(i), YAPLParser.Var_typeContext):
+                par_type = ctx.getChild(i).getText()
+                is_type = self.type_table.search(par_type)
+
+                # Check if the parameter type is valid.
+                if is_type != None:
+                    par_id = ctx.getChild(i - 2).getText()
+                    if par_id in [i['id'] for i in parameters]:
+                        line = ctx.getChild(i).start.line
+                        col = ctx.getChild(i).start.column
+                        self.my_errors.add_error(self.my_errors.redef, line, col)
+                    parameters.append({"type": par_type, "id": par_id})
+                    self.par_table.add(par_type, par_id)
+                else:
+                    line = ctx.return_type().var_type().start.line
+                    column = ctx.return_type().var_type().start.column
+                    self.my_errors.add_error(self.my_errors.no_type, line, column)
+
+        parent = ctx.parentCtx
+        parent_name = parent.var_type()[0].getText()
+
+        # Add the method to the method table and the class's list of methods.
+        self.method_table.add(_type, methodsName, parameters, parent_name)
+        self.class_table.search(parent_name)['methods'].append(methodsName)
+
     def exitClass_method(self, ctx: YAPLParser.Class_methodContext):
         # Get the method type from the method table.
         method_type = self.method_table.search(self.current_scope.scope_name)
 
         # Check if the method type is not defined or is an error.
-        if method_type == None or method_type == self.ERROR:
+        if method_type is None or method_type == self.ERROR:
             self.nodes_and_types[ctx.getText()] = self.ERROR
             return
 
@@ -537,11 +537,9 @@ class outputHandler(YAPLListener):
             exit_type = self.nodes_and_types[ctx.expr().getText()+self.method_table.search(self.current_scope.scope_name)['parent']]
 
         # Free the parameter table and pop the current scope.
-        #self.par_table.free()
+        self.par_table.free()
         self.scope_register.append(self.current_scope)
-        copy_vars = self.current_scope
         self.scope_pop()
-        self.current_scope.symbol_table += copy_vars.symbol_table
 
         # Check for return type mismatches and errors.
         if method_type == self.VOID and exit_type != self.VOID and exit_type != self.ERROR:
@@ -550,7 +548,7 @@ class outputHandler(YAPLListener):
             col = ctx.return_type().start.column
             self.my_errors.add_error(self.my_errors.no_ret, line, col)
             return
-        
+
         if method_type != exit_type:
             if exit_type == self.ERROR:
                 self.nodes_and_types[ctx.getText()] = self.ERROR
@@ -559,26 +557,28 @@ class outputHandler(YAPLListener):
             line = ctx.return_type().start.line
             col = ctx.return_type().start.column
             self.my_errors.add_error(self.my_errors.dif_type_ret, line, col)
-        
+
         self.nodes_and_types[ctx.getText()] = self.VOID
 
     def enterClass_attribute(self, ctx: YAPLParser.Class_attributeContext):
+        # sourcery skip: avoid-builtin-shadow
+        # sourcery skip: avoid-builtin-shadow
         # Get the type and identifier of the attribute.
         type = ctx.var_type().getText()
         id = ctx.var_id().getText()
 
         # Check if the attribute is not redefined.
-        if self.current_scope.search(id) == None:
+        if self.current_scope.search(id) is None:
             is_type = self.type_table.search(type)
 
             # Check if the attribute type is valid.
-            if is_type == None:
+            if is_type is None:
                 line = ctx.start.line
                 column = ctx.start.column
                 self.my_errors.add_error(self.my_errors.no_type, line, column)
                 self.nodes_and_types[ctx.getText()] = self.ERROR
                 return
-            
+
             size = is_type["size"]
             offset = self.current_scope.this_off
             self.current_scope.add(type, id, size, offset, False)
@@ -609,12 +609,13 @@ class outputHandler(YAPLListener):
             self.nodes_and_types[ctx.var_id().getText()] = ctx.var_type().getText()
       
     def exitNew_expr(self, ctx: YAPLParser.New_exprContext):
+        # sourcery skip: avoid-builtin-shadow
         # Get the type being instantiated with "new".
         type = ctx.var_type().getText()
-        
+
         # Check if the type is defined in the type table.
         is_type = self.type_table.search(type)
-        if is_type == None:
+        if is_type is None:
             line = ctx.start.line
             column = ctx.start.column
             self.my_errors.add_error(self.my_errors.no_type, line, column)
@@ -625,39 +626,33 @@ class outputHandler(YAPLListener):
         self.nodes_and_types[ctx.getText()] = type
 
     def exitAdd_expr(self, ctx: YAPLParser.Add_exprContext):
-        # Check if there is an error in any of the child nodes.
-        error = self.BelowNodesHasError(ctx)
-        if error:
+        if error := self.BelowNodesHasError(ctx):
             self.nodes_and_types[ctx.getText()] = self.ERROR
             return
-        
+
         # Get the types of the operands.
         type1 = self.nodes_and_types[ctx.getChild(0).getText()]
         type2 = self.nodes_and_types[ctx.getChild(2).getText()]
-        
+
         expec_type = ""
 
         # Check if the operation is valid (addition of integers or concatenation of strings).
         if (type1 == self.INT and type2 == self.INT) or (type1 == self.STRING and type2 == self.STRING):
-            if type1 == self.INT:
-                expec_type = self.INT
-            else:
-                expec_type = self.STRING
+            expec_type = self.INT if type1 == self.INT else self.STRING
             self.nodes_and_types[ctx.getText()] = expec_type
         else:
             line = ctx.start.line
             column = ctx.start.column
-            self.my_errors.add_error(self.my_errors.arithmetic_no_int, line, column)
+            self.my_errors.add_error(self.my_errors.arit_no_int, line, column)
             self.nodes_and_types[ctx.getText()] = self.ERROR
 
     # The exitSub_expr and exitMul_expr methods have similar functionality to exitAdd_expr,
     # so the comments for them will be omitted to avoid redundancy.
     def exitSub_expr(self, ctx: YAPLParser.Add_exprContext):
-        error = self.BelowNodesHasError(ctx)
-        if error:
+        if error := self.BelowNodesHasError(ctx):
             self.nodes_and_types[ctx.getText()] = self.ERROR
             return
-        
+
         type1 = self.nodes_and_types[ctx.getChild(0).getText()]
         type2 = self.nodes_and_types[ctx.getChild(2).getText()]
 
@@ -666,15 +661,14 @@ class outputHandler(YAPLListener):
         else:
             line = ctx.start.line
             column = ctx.start.column
-            self.my_errors.add_error(self.my_errors.arithmetic_no_int, line, column)
+            self.my_errors.add_error(self.my_errors.arit_no_int, line, column)
             self.nodes_and_types[ctx.getText()] = self.ERROR
 
     def exitMul_expr(self, ctx: YAPLParser.Add_exprContext):
-        error = self.BelowNodesHasError(ctx)
-        if error:
+        if error := self.BelowNodesHasError(ctx):
             self.nodes_and_types[ctx.getText()] = self.ERROR
             return
-        
+
         type1 = self.nodes_and_types[ctx.getChild(0).getText()]
         type2 = self.nodes_and_types[ctx.getChild(2).getText()]
 
@@ -683,16 +677,14 @@ class outputHandler(YAPLListener):
         else:
             line = ctx.start.line
             column = ctx.start.column
-            self.my_errors.add_error(self.my_errors.arithmetic_no_int, line, column)
+            self.my_errors.add_error(self.my_errors.arit_no_int, line, column)
             self.nodes_and_types[ctx.getText()] = self.ERROR
 
     def exitDiv_expr(self, ctx: YAPLParser.Add_exprContext):
-        # Check if there is an error in any of the child nodes.
-        error = self.BelowNodesHasError(ctx)
-        if error:
+        if error := self.BelowNodesHasError(ctx):
             self.nodes_and_types[ctx.getText()] = self.ERROR
             return
-        
+
         # Get the types of the operands.
         type1 = self.nodes_and_types[ctx.getChild(0).getText()]
         type2 = self.nodes_and_types[ctx.getChild(2).getText()]
@@ -703,13 +695,11 @@ class outputHandler(YAPLListener):
         else:
             line = ctx.start.line
             column = ctx.start.column
-            self.my_errors.add_error(self.my_errors.arithmetic_no_int, line, column)
+            self.my_errors.add_error(self.my_errors.arit_no_int, line, column)
             self.nodes_and_types[ctx.getText()] = self.ERROR
 
     def exitLess_expr(self, ctx: YAPLParser.Less_exprContext):
-        # Check if there is an error in any of the child nodes.
-        error = self.BelowNodesHasError(ctx)
-        if error:
+        if error := self.BelowNodesHasError(ctx):
             self.nodes_and_types[ctx.getText()] = self.ERROR
             return
 
@@ -729,8 +719,7 @@ class outputHandler(YAPLListener):
     # The exitEq_expr and exitLessEq_expr methods have similar functionality to exitLess_expr,
     # so the comments for them will be omitted to avoid redundancy.
     def exitEq_expr(self, ctx: YAPLParser.Less_exprContext):
-        error = self.BelowNodesHasError(ctx)
-        if error:
+        if error := self.BelowNodesHasError(ctx):
             self.nodes_and_types[ctx.getText()] = self.ERROR
             return
 
@@ -748,8 +737,7 @@ class outputHandler(YAPLListener):
     # The exitNot_expr and exitNeg_expr methods have similar functionality to exitLess_expr,
     # so the comments for them will be omitted to avoid redundancy.
     def exitLessEq_expr(self, ctx: YAPLParser.Less_exprContext):
-        error = self.BelowNodesHasError(ctx)
-        if error:
+        if error := this.BelowNodesHasError(ctx):
             self.nodes_and_types[ctx.getText()] = self.ERROR
             return
 
@@ -765,15 +753,13 @@ class outputHandler(YAPLListener):
             self.nodes_and_types[ctx.getText()] = self.ERROR
 
     def exitNot_expr(self, ctx: YAPLParser.Not_exprContext):
-        # Check if there is an error in any of the child nodes.
-        error = self.BelowNodesHasError(ctx)
-        if error:
+        if error := self.BelowNodesHasError(ctx):
             self.nodes_and_types[ctx.getText()] = self.ERROR
             return
-        
+
         # Get the type of the expression being negated.
         typeSingle = self.nodes_and_types[ctx.getChild(1).getText()]
-        
+
         # Check if the negation is valid (applied to a boolean expression).
         if typeSingle == self.BOOL:
             self.nodes_and_types[ctx.getText()] = self.BOOL
@@ -784,15 +770,13 @@ class outputHandler(YAPLListener):
             self.nodes_and_types[ctx.getText()] = self.ERROR
 
     def exitNeg_expr(self, ctx: YAPLParser.Neg_exprContext):
-    # Check if there is an error in any of the child nodes.
-        error = self.BelowNodesHasError(ctx)
-        if error:
+        if error := self.BelowNodesHasError(ctx):
             self.nodes_and_types[ctx.getText()] = self.ERROR
             return
-        
+
         # Get the type of the expression being negated.
         typeSingle = self.nodes_and_types[ctx.getChild(1).getText()]
-        
+
         # Check if the negation is valid (applied to an integer expression).
         if typeSingle == self.INT:
             self.nodes_and_types[ctx.getText()] = self.INT
@@ -803,29 +787,23 @@ class outputHandler(YAPLListener):
             self.nodes_and_types[ctx.getText()] = self.ERROR
 
     def exitPar_expr(self, ctx: YAPLParser.Par_exprContext):
-        # Check if there is an error in any of the child nodes.
-        error = self.BelowNodesHasError(ctx)
-        if error:
+        if error := self.BelowNodesHasError(ctx):
             self.nodes_and_types[ctx.getText()] = self.ERROR
             return
-        
+
         # Set the type of the parenthesis expression to the type of its enclosed expression.
         self.nodes_and_types[ctx.getText()] = self.nodes_and_types[ctx.getChild(1).getText()]
 
     def exitVoid_expr(self, ctx: YAPLParser.Void_exprContext):
-        # Check if there is an error in any of the child nodes.
-        error = self.BelowNodesHasError(ctx)
-        if error:
+        if error := self.BelowNodesHasError(ctx):
             self.nodes_and_types[ctx.getText()] = self.ERROR
             return
-        
+
         # A Void expression is considered as an error, as Void cannot be used as an expression.
         self.nodes_and_types[ctx.getText()] = self.ERROR
 
     def exitAssign_expr(self, ctx: YAPLParser.Assign_exprContext):
-        # Check if there is an error in any of the child nodes.
-        error = self.BelowNodesHasError(ctx)
-        if error:
+        if error := self.BelowNodesHasError(ctx):
             self.nodes_and_types[ctx.getText()] = self.ERROR
             return
 
@@ -843,9 +821,7 @@ class outputHandler(YAPLListener):
             self.nodes_and_types[ctx.getText()] = self.ERROR
 
     def exitConditional_expr(self, ctx: YAPLParser.Conditional_exprContext):
-        # Check if there is an error in any of the child nodes.
-        error = self.BelowNodesHasError(ctx)
-        if error:
+        if error := self.BelowNodesHasError(ctx):
             self.nodes_and_types[ctx.getText()] = self.ERROR
             return
 
@@ -863,11 +839,7 @@ class outputHandler(YAPLListener):
         # Exit function for a loop expression
     
     def exitLoop_expr(self, ctx: YAPLParser.Loop_exprContext):
-        # Check if there were any errors in child nodes
-        error = self.BelowNodesHasError(ctx)
-        
-        # If there were errors, mark the current expression as an error and return
-        if error:
+        if error := self.BelowNodesHasError(ctx):
             self.nodes_and_types[ctx.getText()] = self.ERROR
             return
 
@@ -886,11 +858,7 @@ class outputHandler(YAPLListener):
 
     # Exit function for a branch expression
     def exitBr_expr(self, ctx: YAPLParser.Br_exprContext):
-        # Check if there were any errors in child nodes
-        error = self.BelowNodesHasError(ctx)
-        
-        # If there were errors, mark the current expression as an error and return
-        if error:
+        if error := self.BelowNodesHasError(ctx):
             self.nodes_and_types[ctx.getText()] = self.ERROR
             return
 
@@ -914,30 +882,24 @@ class outputHandler(YAPLListener):
     def exitmethod_call(self, ctx: YAPLParser.method_callContext):
         # Get the name of the method being called
         methodsName = ctx.var_id().getText()
-        
-        # Initialize a list to store the method call parameters
-        parameters = []
 
-        # Iterate through the children of the method call expression
-        for ch in ctx.children:
-            if isinstance(ch, YAPLParser.ExprContext):
-                # If the child is an expression, append it as a parameter
-                parameters.append(ch)
-
+        parameters = [
+            ch for ch in ctx.children if isinstance(ch, YAPLParser.ExprContext)
+        ]
         # Search for details about the method in the method table
         method_detail = self.method_table.search(methodsName)
-        
+
         # If the method is not found, mark the current expression as an error
-        if method_detail == None:
+        if method_detail is None:
             self.nodes_and_types[ctx.getText()] = self.ERROR
             line = ctx.var_id().start.line
             col = ctx.var_id().start.column
             self.my_errors.add_error(self.my_errors.no_method, line, col)
             return
-                    
+
         # Get the parent class of the current method's scope
         method_parent = self.method_table.search(self.current_scope.scope_name)['type']
-        
+
         # Check if the method being called is a valid method of the parent class
         if methodsName not in self.class_table.search(method_parent)['methods']:
             # If not valid, mark the current expression as an error
@@ -946,7 +908,7 @@ class outputHandler(YAPLListener):
             col = ctx.var_id().start.column
             self.my_errors.add_error(self.my_errors.no_method, line, col)
             return
-        
+
         # Check if the number of parameters in the method call matches the method's parameter count
         if len(parameters) != len(method_detail['param']):
             self.nodes_and_types[ctx.getText()] = self.ERROR
@@ -956,7 +918,7 @@ class outputHandler(YAPLListener):
             return
 
         # If there are no parameters, set the type of the method call to the return type of the method
-        if len(parameters) == 0:
+        if not parameters:
             self.nodes_and_types[ctx.getText()] = method_detail["type"]
 
         # Check the types of parameters and ensure they match the method's parameter types
@@ -967,7 +929,7 @@ class outputHandler(YAPLListener):
                 # If a parameter has an error, mark the current expression as an error
                 self.nodes_and_types[ctx.getText()] = self.ERROR
                 return
-            
+
             method_par_type = method_detail['param'][i]['type']
 
             if this_par_type != method_par_type:
@@ -993,7 +955,7 @@ class outputHandler(YAPLListener):
 
         # Get the variable identifier from the context
         var_id = ctx.var_id().getText()
-        
+
         # Initialize child_scope with the current scope
         child_scope = self.current_scope
 
@@ -1006,14 +968,14 @@ class outputHandler(YAPLListener):
         child_class = self.class_table.search(childType) 
 
         # Check if the child class is not found or is an error
-        if child_class == None or child_class == self.ERROR:
+        if child_class is None or child_class == self.ERROR:
             # Mark the current expression as an error and report the issue
             self.nodes_and_types[ctx.getText()] = self.ERROR
             line = ctx.var_id().start.line
             col = ctx.var_id().start.column
             self.my_errors.add_error(self.my_errors.no_def, line, col)
             return
-        
+
         # Check if the variable identifier exists in the child's scope
         if child_scope.search(var_id) != None:
             # Set the type of the current expression to the type of the variable
@@ -1021,25 +983,22 @@ class outputHandler(YAPLListener):
         elif var_id in child_class['methods']:
             # If the variable is a method, it might be a method call
             methodsName = var_id
-            parameters = []
-
-            # Collect method call parameters from the context
-            for ch in ctx.children:
-                if isinstance(ch, YAPLParser.ExprContext):
-                    parameters.append(ch)
+            parameters = [
+                ch for ch in ctx.children if isinstance(ch, YAPLParser.ExprContext)
+            ]
             parameters.pop(0)  # Remove the first parameter which is the object itself
 
             # Search for details about the method in the method table
             method_detail = self.method_table.search(methodsName)
-            
+
             # If the method is not found, mark the current expression as an error
-            if method_detail == None:
+            if method_detail is None:
                 self.nodes_and_types[ctx.getText()] = self.ERROR
                 line = ctx.var_id().start.line
                 col = ctx.var_id().start.column
                 self.my_errors.add_error(self.my_errors.no_method, line, col)
                 return
-                    
+
             # Get the parent class of the child expression's type
             method_parent = childType
 
@@ -1051,7 +1010,7 @@ class outputHandler(YAPLListener):
                 col = ctx.var_id().start.column
                 self.my_errors.add_error(self.my_errors.no_method, line, col)
                 return
-            
+
             # Check if the number of parameters in the method call matches the method's parameter count
             if len(parameters) != len(method_detail['param']):
                 self.nodes_and_types[ctx.getText()] = self.ERROR
@@ -1061,7 +1020,7 @@ class outputHandler(YAPLListener):
                 return
 
             # If there are no parameters, set the type of the method call to the return type of the method
-            if len(parameters) == 0:
+            if not parameters:
                 self.nodes_and_types[ctx.getText()] = method_detail["type"]
 
             # Check the types of parameters and ensure they match the method's parameter types
@@ -1072,7 +1031,7 @@ class outputHandler(YAPLListener):
                     # If a parameter has an error, mark the current expression as an error
                     self.nodes_and_types[ctx.getText()] = self.ERROR
                     return
-                
+
                 method_par_type = method_detail['param'][i]['type']
 
                 if this_par_type != method_par_type:
@@ -1097,9 +1056,10 @@ class outputHandler(YAPLListener):
         # Enter function for a let expression
     
     def enterLet_expr(self, ctx: YAPLParser.Add_exprContext):
+        # sourcery skip: avoid-builtin-shadow
         # Get the total number of child nodes
         child_s = ctx.getChildCount()
-        
+
         # Iterate through the child nodes
         for i in range(child_s):
             # Check if the child node is of type 'Var_typeContext' (indicating a variable declaration)
@@ -1109,25 +1069,25 @@ class outputHandler(YAPLListener):
                 id = ctx.getChild(i-2).getText()
 
                 # Check if the variable is not already defined in the current scope
-                if self.current_scope.search(id) == None:
+                if self.current_scope.search(id) is None:
                     # Search for the type information in the type table
                     is_type = self.type_table.search(type)
-                    
+
                     # If the type is not found, report an error
-                    if is_type == None:
+                    if is_type is None:
                         line = ctx.start.line
                         column = ctx.start.column
                         self.my_errors.add_error(self.my_errors.no_type, line, column)
                         self.nodes_and_types[ctx.getText()] = self.ERROR
                         return
-                    
+
                     # Get the size and offset information for the variable
                     size = is_type["size"]
                     offset = self.current_scope.this_off
-                    
+
                     # Add the variable to the current scope
                     self.current_scope.add(type, id, size, offset, False)
-                    
+
                     # Set the type of the variable in the nodes_and_types dictionary
                     self.nodes_and_types[id] = type
                 else:
@@ -1142,7 +1102,7 @@ class outputHandler(YAPLListener):
         # Set the type of the current expression to the type of the last expression in the 'let' block
         self.nodes_and_types[ctx.getText()] = self.nodes_and_types[ctx.expr()[-1].getText()]
 
-path = "test/arith.cl"
+path = "test/testLet.YAPL"
 
 to_compile = Compiler(path)
 print(to_compile.printer.my_errors.get_errors())

@@ -1,0 +1,13 @@
+class Test {
+    z : Int <- 3;
+    copyTest() : SELF_TYPE { self };
+};
+
+class Main  {
+    x : Test;
+    y : Int;
+    main() : void {{
+        LET a : Int <- 1, b: Int <- 3 IN  {y <- ((new Test).copyTest().z());
+        y <- 4;};      
+    }};
+  };

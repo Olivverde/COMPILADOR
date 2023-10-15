@@ -163,9 +163,10 @@ class Intermediate(testListener):
     """
     def getTop(self, id, offset_required = None):
         var = self.current_scope.search(id)
+        print(var)
         offs = 0
         if var != None:
-            offs = var['off']
+            offs = var['Offset']
             if offset_required:
                 offs = offset_required
             
@@ -194,7 +195,7 @@ class Intermediate(testListener):
         #Create symbol table
         self.current_scope = SymbolTable(ctx.getText())
         #Add the self symbol
-        self.current_scope.add_symb("SELF_TYPE", "self", self.type_table.search("SELF_TYPE")['size'], self.current_scope.this_off, False)
+        self.current_scope.add("SELF_TYPE", "self", self.type_table.search("SELF_TYPE")['size'], self.current_scope.this_off, False)
     
 
     """
@@ -217,7 +218,7 @@ class Intermediate(testListener):
 
         # Add the class, the type and the node
         self.class_table.add_class(this_class, this_class, inherits, methods)
-        self.type_table.add_type(this_class, 0, self.type_table.CLASS)
+        self.type_table.add(this_class, 0, self.type_table.CLASS)
         self.nodes_and_types[this_class] = this_class
 
         # Add to the Stack
@@ -724,7 +725,7 @@ class Intermediate(testListener):
         # Enter the methods table
         parent = ctx.parentCtx
         parent_name = parent.var_type()[0].getText()
-        self.method_table.add_method(tipo, method_name, parameters, parent_name)
+        self.method_table.add(tipo, method_name, parameters, parent_name)
         # Update class table
         self.class_table.search(parent_name)['methods'].append(method_name)
         # Put the new method on the stack
@@ -861,7 +862,7 @@ class Intermediate(testListener):
         # Configure and add current scope
         size = is_type["size"]
         offset = self.current_scope.this_off
-        self.current_scope.add_symb(type, id, size, offset, False)
+        self.current_scope.add(type, id, size, offset, False)
 
     """
         _Author_
@@ -1209,6 +1210,7 @@ class Intermediate(testListener):
             for ch in ctx.children:
                 if isinstance(ch, testParser.ExprContext):
                     parameters.append(ch)
+            print(parameters)
             parameters.pop(0)
 
             method_detail = self.method_table.search(method_name)

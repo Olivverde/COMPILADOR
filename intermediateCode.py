@@ -1122,14 +1122,19 @@ class Intermediate(testListener):
         self.nodes_and_types[ctx.getText()] = method_detail["type"]
 
         # Define the beginning of the code as a method call
-        code = f'CALL {method_name}, '
+        if method_detail["type"] not in ("Object", "IO", "Main"):
+            addr = self.get_new_temp()
+            code = f'{addr} = CALL {method_name}, '
+        else:
+            addr = "R"
+            code = f'CALL {method_name}, '
 
         # If it does not have parameters, a 0 is added to the end of the string and the nodop is added with the code, with generic R registration
         if len(parameters) == 0:
             code += str(0)
             self.nodes_and_codes[ctx.getText()] = {
                 'code': [code],
-                'addr': ('R',False)
+                'addr': (addr,False)
             }
             return
         
@@ -1149,7 +1154,7 @@ class Intermediate(testListener):
         code += str(len(parameters))
         self.nodes_and_codes[ctx.getText()] = {
             'code': all_code + par_code + [code],
-            'addr': ('R', False)
+            'addr': (addr, True)
         }
 
     """
